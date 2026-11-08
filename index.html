@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <script>
+      (function () {
+        // 1. Suppress Vite HMR WebSocket closed without opened console errors & unhandled rejections
+        var origError = console.error;
+        console.error = function () {
+          var args = Array.prototype.slice.call(arguments);
+          var text = args
+            .map(function (a) {
+              return a && a.message ? a.message : String(a);
+            })
+            .join(' ');
+          if (text.indexOf('WebSocket closed without opened') !== -1) {
+            return;
+          }
+          return origError.apply(console, args);
+        };
+
+        window.addEventListener(
+          'unhandledrejection',
+          function (event) {
+            var msg =
+              event && event.reason
+                ? event.reason.message || String(event.reason)
+                : '';
+            if (msg.indexOf('WebSocket closed without opened') !== -1) {
+              event.stopImmediatePropagation();
+              event.preventDefault();
+            }
+          },
+          true
+        );
+
+        window.addEventListener(
+          'error',
+          function (event) {
+            var msg = (event && event.message) || '';
+            if (msg.indexOf('WebSocket closed without opened') !== -1) {
+              event.stopImmediatePropagation();
+              event.preventDefault();
+            }
+          },
+          true
+        );
+
+        // 2. Shim Vite HMR WebSocket so @vite/client never rejects when HMR is disabled behind proxy
+        var NativeWebSocket = window.WebSocket;
+        if (NativeWebSocket) {
+          var ShimmedWebSocket = function (url, protocols) {
+            var isViteHmr =
+              protocols === 'vite-hmr' ||
+              (Array.isArray(protocols) && protocols.indexOf('vite-hmr') !== -1);
+            if (isViteHmr) {
+              var dummy = new EventTarget();
+              dummy.readyState = 1; // OPEN
+              dummy.send = function () {};
+              dummy.close = function () {};
+              dummy. binaryType = 'blob';
+              dummy.bufferedAmount = 0;
+              dummy.extensions = '';
+              dummy.protocol = 'vite-hmr';
+              dummy.url = String(url || '');
+              setTimeout(function () {
+                var openEvt = new Event('open');
+                if (typeof dummy.onopen === 'function') dummy.onopen(openEvt);
+                dummy.dispatchEvent(openEvt);
+              }, 10);
+              return dummy;
+            }
+            return protocols !== undefined
+              ? new NativeWebSocket(url, protocols)
+              : new NativeWebSocket(url);
+          };
+          ShimmedWebSocket.prototype = NativeWebSocket.prototype;
+          ShimmedWebSocket.CONNECTING = NativeWebSocket.CONNECTING;
+          ShimmedWebSocket.OPEN = NativeWebSocket.OPEN;
+          ShimmedWebSocket.CLOSING = NativeWebSocket.CLOSING;
+          ShimmedWebSocket.CLOSED = NativeWebSocket.CLOSED;
+          window.WebSocket = ShimmedWebSocket;
+        }
+      })();
+    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DukaanVyapar - Billing & Pack Stock</title>
+    <meta name="description" content="Mobile-first offline shopkeeper billing and carton-piece inventory app with AI supplier bill camera scanner and custom pack sizes." />
+    <meta property="og:title" content="DukaanVyapar - Billing & Pack Stock" />
+    <meta property="og:description" content="Mobile-first offline shopkeeper billing and carton-piece inventory app with AI supplier bill camera scanner and custom pack sizes." />
+    <meta property="og:type" content="website" />
+    <meta name="theme-color" content="#10b981" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="DukaanVyapar" />
+    <link rel="icon" type="image/svg+xml" href="/icon.svg" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <!-- Fonts for shopkeeper UI -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+

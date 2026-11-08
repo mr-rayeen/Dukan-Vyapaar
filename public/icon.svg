@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#059669"/>
+      <stop offset="100%" stop-color="#0284c7"/>
+    </linearGradient>
+    <linearGradient id="boxGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b"/>
+      <stop offset="100%" stop-color="#d97706"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="112" fill="url(#grad)"/>
+  <!-- Isometric carton box -->
+  <g transform="translate(256, 210)">
+    <!-- Top face -->
+    <polygon points="0,-90 100,-35 0,20 -100,-35" fill="#fde68a" />
+    <polygon points="0,-90 0,20 10,-30 10,-85" fill="#fef3c7" opacity="0.6"/>
+    <!-- Left face -->
+    <polygon points="-100,-35 0,20 0,135 -100,80" fill="#f59e0b" />
+    <!-- Right face -->
+    <polygon points="0,20 100,-35 100,80 0,135" fill="#d97706" />
+    <!-- Carton tape -->
+    <polygon points="0,-90 0,20 16,11 16,-81" fill="#b45309" opacity="0.4"/>
+    <polygon points="0,20 0,135 16,126 16,11" fill="#b45309" opacity="0.4"/>
+  </g>
+  <!-- Rupee Symbol & Bill Badge -->
+  <g transform="translate(340, 340)">
+    <circle cx="0" cy="0" r="70" fill="#ffffff" filter="drop-shadow(0px 8px 16px rgba(0,0,0,0.25))"/>
+    <text x="0" y="22" font-family="Arial, sans-serif" font-size="70" font-weight="900" fill="#059669" text-anchor="middle">₹</text>
+  </g>
+  <!-- Barcode mini lines on left -->
+  <g transform="translate(100, 360)">
+    <rect x="0" y="0" width="8" height="40" rx="4" fill="#ffffff" opacity="0.9"/>
+    <rect x="14" y="0" width="16" height="40" rx="4" fill="#ffffff" opacity="0.9"/>
+    <rect x="36" y="0" width="6" height="40" rx="3" fill="#ffffff" opacity="0.9"/>
+    <rect x="48" y="0" width="12" height="40" rx="4" fill="#ffffff" opacity="0.9"/>
+    <rect x="66" y="0" width="18" height="40" rx="4" fill="#ffffff" opacity="0.9"/>
+    <rect x="90" y="0" width="6" height="40" rx="3" fill="#ffffff" opacity="0.9"/>
+  </g>
+</svg>

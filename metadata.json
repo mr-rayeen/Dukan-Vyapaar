@@ -1,0 +1,6 @@
+{
+  "name": "DukaanVyapar - Billing & Pack Stock",
+  "description": "Mobile-first offline shopkeeper billing and carton-piece inventory app with AI supplier bill camera scanner and custom pack sizes.",
+  "requestFramePermissions": ["camera"],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
