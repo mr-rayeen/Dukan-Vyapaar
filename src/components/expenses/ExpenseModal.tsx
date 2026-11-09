@@ -56,11 +56,12 @@ export const ExpenseModal: React.FC<ExpenseModalProps> = ({
     };
 
     onSaveExpense(newExpense);
-    // Reset form
+    // Reset form and close modal automatically
     setTitle('');
     setAmount('');
     setNotes('');
-    setActiveTab('list');
+    setActiveTab('add');
+    onClose();
   };
 
   const getDefaultTitle = (cat: ExpenseCategory, language: 'hi' | 'en') => {

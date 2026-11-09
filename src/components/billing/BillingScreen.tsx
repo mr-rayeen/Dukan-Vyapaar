@@ -2,6 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { Bill, BillItem, PaymentMethod, Product, ShopSettings } from '../../types';
 import { calculateItemTotal, composePieces, decomposePieces, formatStock } from '../../utils/stockLogic';
 import { generateUniqueId } from '../../utils/idGenerator';
+import { showToast } from '../common/ToastProvider';
 import confetti from 'canvas-confetti';
 import {
   Search,
@@ -127,6 +128,12 @@ export const BillingScreen: React.FC<BillingScreenProps> = ({
           totalAmount,
         },
       ]);
+      showToast({
+        type: 'info',
+        title: lang === 'hi' ? 'बिल में आइटम जोड़ा गया' : 'Added to Bill Cart',
+        message: product.name,
+        duration: 1800,
+      });
     }
     setErrorMessage(null);
   };
@@ -163,7 +170,16 @@ export const BillingScreen: React.FC<BillingScreenProps> = ({
   };
 
   const handleRemoveFromCart = (productId: string) => {
+    const removed = cart.find((item) => item.productId === productId);
     setCart(cart.filter((item) => item.productId !== productId));
+    if (removed) {
+      showToast({
+        type: 'warning',
+        title: lang === 'hi' ? 'बिल से आइटम हटाया गया' : 'Removed from Cart',
+        message: removed.productName,
+        duration: 1800,
+      });
+    }
   };
 
   // Validation: Check if any item exceeds available pieces in stock!
@@ -198,16 +214,42 @@ export const BillingScreen: React.FC<BillingScreenProps> = ({
   // Submit and Save Bill
   const handleSubmitBill = () => {
     if (cart.length === 0) {
-      setErrorMessage(lang === 'hi' ? 'कार्ट खाली है! सामान जोड़ें।' : 'Cart is empty! Add products.');
+      const msg = lang === 'hi' ? 'कार्ट खाली है! कृपया बिल में सामान जोड़ें।' : 'Cart is empty! Please add products to the bill.';
+      setErrorMessage(msg);
+      showToast({
+        type: 'error',
+        title: lang === 'hi' ? 'बिल नहीं बन सकता' : 'Cannot Create Bill',
+        message: msg,
+      });
+      return;
+    }
+
+    const zeroQtyItem = cart.find((it) => it.cartonQty <= 0 && it.pieceQty <= 0);
+    if (zeroQtyItem) {
+      const msg =
+        lang === 'hi'
+          ? `"${zeroQtyItem.productName}" की मात्रा 0 है! कृपया बॉक्स या लड़ी संख्या भरें।`
+          : `"${zeroQtyItem.productName}" has 0 quantity! Please enter Box or Ladi quantity.`;
+      setErrorMessage(msg);
+      showToast({
+        type: 'error',
+        title: lang === 'hi' ? 'मात्रा (Quantity) गलत है' : 'Invalid Item Quantity',
+        message: msg,
+      });
       return;
     }
 
     if (!stockValidation.isValid) {
-      setErrorMessage(
+      const msg =
         lang === 'hi'
           ? `स्टॉक कम है! "${stockValidation.failedItem}" के केवल ${stockValidation.availablePieces} लड़ी (${stockValidation.availableFormatted}) मौजूद हैं।`
-          : `Insufficient stock! "${stockValidation.failedItem}" only has ${stockValidation.availablePieces} ladi (${stockValidation.availableFormatted}) available.`
-      );
+          : `Insufficient stock! "${stockValidation.failedItem}" only has ${stockValidation.availablePieces} ladi (${stockValidation.availableFormatted}) available.`;
+      setErrorMessage(msg);
+      showToast({
+        type: 'error',
+        title: lang === 'hi' ? 'गोदाम में स्टॉक कम है!' : 'Insufficient Godown Stock!',
+        message: msg,
+      });
       return;
     }
 

@@ -24,6 +24,14 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
   onToggleDarkMode,
 }) => {
   const [formData, setFormData] = useState<ShopSettings>({ ...settings });
+  const [showResetConfirm, setShowResetConfirm] = useState(false);
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setFormData({ ...settings });
+      setShowResetConfirm(false);
+    }
+  }, [isOpen, settings]);
 
   if (!isOpen) return null;
 
@@ -162,19 +170,42 @@ export const SettingsModal: React.FC<SettingsModalProps> = ({
           </div>
 
           <div className="pt-3 border-t border-slate-200 dark:border-slate-800">
-            <button
-              type="button"
-              onClick={() => {
-                if (confirm('Reset store back to realistic demo data with 8 pre-configured products and pack sizes?')) {
-                  onResetDemoData();
-                  onClose();
-                }
-              }}
-              className="w-full py-2 bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 text-slate-600 dark:text-slate-400 font-semibold text-[11px] rounded-lg transition flex items-center justify-center gap-1.5"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset Demo Store Products & Stock</span>
-            </button>
+            {showResetConfirm ? (
+              <div className="p-2.5 bg-rose-50 dark:bg-rose-950/50 border border-rose-300 dark:border-rose-800 rounded-xl flex items-center justify-between gap-2">
+                <span className="text-[11px] font-bold text-rose-800 dark:text-rose-200">
+                  {lang === 'hi' ? 'डेमो डेटा रीसेट करें?' : 'Reset to demo data?'}
+                </span>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      onResetDemoData();
+                      setShowResetConfirm(false);
+                      onClose();
+                    }}
+                    className="px-2.5 py-1 bg-rose-600 hover:bg-rose-500 text-white font-black text-[11px] rounded-lg"
+                  >
+                    {lang === 'hi' ? 'हाँ, रीसेट' : 'Yes, Reset'}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setShowResetConfirm(false)}
+                    className="px-2 py-1 bg-slate-200 dark:bg-slate-700 text-slate-700 dark:text-slate-200 font-bold text-[11px] rounded-lg"
+                  >
+                    {lang === 'hi' ? 'रद्द' : 'Cancel'}
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={() => setShowResetConfirm(true)}
+                className="w-full py-2 bg-slate-100 dark:bg-slate-800 hover:bg-rose-50 hover:text-rose-700 dark:hover:bg-rose-950/40 dark:hover:text-rose-400 text-slate-600 dark:text-slate-400 font-semibold text-[11px] rounded-lg transition flex items-center justify-center gap-1.5"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset Demo Store Products & Stock</span>
+              </button>
+            )}
           </div>
         </form>
       </div>

@@ -2,6 +2,7 @@ import React, { useState, useRef, useMemo } from 'react';
 import { Product, SupplierPurchase, SupplierPurchaseItem } from '../../types';
 import { PackSizeSelector } from '../common/PackSizeSelector';
 import { generateUniqueId } from '../../utils/idGenerator';
+import { showToast } from '../common/ToastProvider';
 import {
   Camera,
   Upload,
@@ -382,11 +383,16 @@ export const ScanBillScreen: React.FC<ScanBillScreenProps> = ({
           data.invoiceNumber || `PB-${Math.floor(1000 + Math.random() * 9000)}`,
           data.invoiceDate || new Date().toISOString().split('T')[0]
         );
-        setErrorMsg(
+        const warnText =
           lang === 'hi'
             ? 'फोटो में अक्षर धुंधले थे — आप नीचे सीधे आइटम का नाम और बॉक्स भर सकते हैं।'
-            : 'Photo text was unclear — you can edit or add items directly below.'
-        );
+            : 'Photo text was unclear — you can edit or add items directly below.';
+        setErrorMsg(warnText);
+        showToast({
+          type: 'warning',
+          title: lang === 'hi' ? 'फोटो धुंधली थी (Manual Review)' : 'Unclear Bill Photo',
+          message: warnText,
+        });
         return;
       }
 
@@ -396,18 +402,30 @@ export const ScanBillScreen: React.FC<ScanBillScreenProps> = ({
         data.invoiceNumber || `INV-${Math.floor(1000 + Math.random() * 9000)}`,
         data.invoiceDate || new Date().toISOString().split('T')[0]
       );
+      showToast({
+        type: 'success',
+        title: lang === 'hi' ? 'पर्ची स्कैन हो गई!' : 'Bill Scanned Successfully!',
+        message:
+          lang === 'hi'
+            ? `${data.items.length} आइटम पढ़े गए (${data.supplierName || 'Supplier'})`
+            : `Extracted ${data.items.length} items from bill`,
+      });
     } catch (err: any) {
       console.error(err);
       const isTimeout = err?.name === 'AbortError';
-      setErrorMsg(
-        isTimeout
-          ? lang === 'hi'
-            ? 'सर्वर में अधिक समय लग रहा है। कृपया दोबारा कोशिश करें या "Load Sample Bill" दबाएं।'
-            : 'Scan timed out. Please try again or use Manual / Sample Bill.'
-          : lang === 'hi'
-          ? `पर्ची स्कैन नहीं हो सकी (${err.message || 'Network/OCR Error'})। कृपया दोबारा कोशिश करें या नीचे "खुद आइटम जोड़ें" दबाएं।`
-          : `Could not process bill photo (${err.message || 'Error'}). Try again or add items manually.`
-      );
+      const errText = isTimeout
+        ? lang === 'hi'
+          ? 'सर्वर में अधिक समय लग रहा है। कृपया दोबारा कोशिश करें या "Load Sample Bill" दबाएं।'
+          : 'Scan timed out. Please try again or use Manual / Sample Bill.'
+        : lang === 'hi'
+        ? `पर्ची स्कैन नहीं हो सकी (${err.message || 'Network/OCR Error'})। कृपया दोबारा कोशिश करें या नीचे "खुद आइटम जोड़ें" दबाएं।`
+        : `Could not process bill photo (${err.message || 'Error'}). Try again or add items manually.`;
+      setErrorMsg(errText);
+      showToast({
+        type: 'error',
+        title: lang === 'hi' ? 'स्कैन फेल हुआ!' : 'Bill Scan Failed',
+        message: errText,
+      });
       setIsProcessing(false);
     }
   };
@@ -476,6 +494,11 @@ export const ScanBillScreen: React.FC<ScanBillScreenProps> = ({
         salePricePiece: Math.round((defaultRate / defaultPack) * 1.25),
       },
     ]);
+    showToast({
+      type: 'info',
+      title: lang === 'hi' ? 'नया आइटम रो जोड़ा गया' : 'New Item Row Added',
+      message: lang === 'hi' ? 'आइटम का नाम और पेटी भरें' : 'Enter item details below',
+    });
   };
 
   // Instant Sample Bill Test
@@ -574,7 +597,14 @@ export const ScanBillScreen: React.FC<ScanBillScreenProps> = ({
   // Save a newly created category and apply it to the selected item or all items
   const handleSaveNewCategory = (target: number | 'bulk') => {
     const clean = newCategoryInput.trim();
-    if (!clean) return;
+    if (!clean) {
+      showToast({
+        type: 'error',
+        title: lang === 'hi' ? 'कैटेगरी का नाम खाली है!' : 'Category Name Required',
+        message: lang === 'hi' ? 'कृपया कैटेगरी का नाम लिखें' : 'Please enter a valid category name.',
+      });
+      return;
+    }
     if (!customCategories.includes(clean)) {
       setCustomCategories((prev) => [...prev, clean]);
     }
@@ -586,28 +616,64 @@ export const ScanBillScreen: React.FC<ScanBillScreenProps> = ({
     setNewCategoryInput('');
     setAddingCategoryForIndex(null);
     setOpenCategoryDropdown(null);
+    showToast({
+      type: 'success',
+      title: lang === 'hi' ? 'नई कैटेगरी बनाई गई!' : 'New Category Created!',
+      message:
+        target === 'bulk'
+          ? `${clean} (${lang === 'hi' ? 'सभी आइटम पर लागू' : 'Applied to all items'})`
+          : `${clean}`,
+    });
   };
 
   // Bulk apply a category to all review items
   const handleApplyCategoryToAll = (cat: string) => {
     setReviewItems((prev) => prev.map((it) => ({ ...it, category: cat })));
     setOpenCategoryDropdown(null);
+    showToast({
+      type: 'success',
+      title: lang === 'hi' ? 'सभी आइटम की कैटेगरी बदली गई!' : 'Bulk Category Applied!',
+      message: `${reviewItems.length} items → ${cat}`,
+    });
   };
 
   const handleRemoveReviewItem = (index: number) => {
+    const removed = reviewItems[index];
     setReviewItems(reviewItems.filter((_, idx) => idx !== index));
+    if (removed) {
+      showToast({
+        type: 'warning',
+        title: lang === 'hi' ? 'आइटम लिस्ट से हटाया गया' : 'Item Removed from List',
+        message: removed.productName,
+      });
+    }
   };
 
   // CONFIRM & ADD STOCK TO MASTER
   const handleConfirmAddStock = () => {
     if (reviewItems.length === 0) {
-      setErrorMsg('No items to add into stock!');
+      const msg = lang === 'hi' ? 'स्टॉक में जोड़ने के लिए कोई आइटम नहीं है!' : 'No items to add into stock!';
+      setErrorMsg(msg);
+      showToast({
+        type: 'error',
+        title: lang === 'hi' ? 'कोई आइटम नहीं है!' : 'Empty Item List',
+        message: msg,
+      });
       return;
     }
 
     for (const item of reviewItems) {
       if (!item.packSize || item.packSize <= 0) {
-        setErrorMsg(`Please specify pack size for "${item.productName}"`);
+        const msg =
+          lang === 'hi'
+            ? `"${item.productName}" का पैक साइज (Pack Size) चुनें!`
+            : `Please specify pack size for "${item.productName}"`;
+        setErrorMsg(msg);
+        showToast({
+          type: 'error',
+          title: lang === 'hi' ? 'पैक साइज अधूरा है!' : 'Invalid Pack Size',
+          message: msg,
+        });
         return;
       }
     }
@@ -676,9 +742,17 @@ export const ScanBillScreen: React.FC<ScanBillScreenProps> = ({
     };
 
     onConfirmPurchase(purchaseRecord, updatedProducts);
-    setSuccessMsg(true);
     setReviewMode(false);
+    setReviewItems([]);
+    setBillImage(null);
+    setErrorMsg(null);
     setOpenCategoryDropdown(null);
+    setAddingCategoryForIndex(null);
+    setNewCategoryInput('');
+    setSuccessMsg(true);
+    window.setTimeout(() => {
+      setSuccessMsg(false);
+    }, 3000);
   };
 
   return (

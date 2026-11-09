@@ -64,19 +64,20 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
   const [historyTypeFilter, setHistoryTypeFilter] = useState<'all' | 'in' | 'out'>('all');
 
   React.useEffect(() => {
-    if (product) {
+    if (product && isOpen) {
       setSalePriceBox(product.salePriceCarton || 0);
       setSalePriceLadi(product.salePricePiece || 0);
       setPurchaseRateBox(product.purchaseRateCarton || 0);
       setAddBoxes(1);
       setAddLadi(0);
       setShowAddStockForm(defaultOpenAddStock);
+      setIsConfirmingDelete(false);
       setHistorySearch('');
       setHistoryStartDate('');
       setHistoryEndDate('');
       setHistoryTypeFilter('all');
     }
-  }, [product, defaultOpenAddStock, isOpen]);
+  }, [product?.id, defaultOpenAddStock, isOpen]);
 
   const productMovements = useMemo(() => {
     if (!product) return [];
@@ -135,6 +136,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
       setAddBoxes(1);
       setAddLadi(0);
       setShowAddStockForm(false);
+      onClose();
     }
   };
 

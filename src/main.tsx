@@ -1,5 +1,11 @@
-import {createRoot} from 'react-dom/client';
+import { createRoot } from 'react-dom/client';
 import App from './App.tsx';
+import { AppErrorBoundary } from './components/common/AppErrorBoundary';
 import './index.css';
 
-createRoot(document.getElementById('root')!).render(<App />);
+createRoot(document.getElementById('root')!).render(
+  <AppErrorBoundary sectionName="Application Root">
+    <App />
+  </AppErrorBoundary>
+);
+

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { AnimatePresence, motion } from 'motion/react';
 import { Bill, Expense, PaymentRecord, Product, ShopSettings } from '../../types';
 import { decomposePieces } from '../../utils/stockLogic';
 import {
@@ -373,8 +374,17 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
         </button>
       </div>
 
-      {/* 0. SALES & UDHARI GRAPHS TAB */}
-      {activeReportTab === 'graphs' && (
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={activeReportTab}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -6 }}
+          transition={{ duration: 0.16, ease: 'easeOut' }}
+          className="space-y-3"
+        >
+          {/* 0. SALES & UDHARI GRAPHS TAB */}
+          {activeReportTab === 'graphs' && (
         <div className="space-y-4">
           <RechartsAnalyticsSection
             bills={bills}
@@ -1960,6 +1970,8 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
           </div>
         </div>
       )}
+        </motion.div>
+      </AnimatePresence>
 
       {/* CUSTOMER LEDGER MODAL */}
       {selectedLedgerCustomer && (
@@ -1994,6 +2006,8 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
             if (onRecordPartPayment) {
               onRecordPartPayment(payment);
             }
+            setActivePaymentTarget(null);
+            setSelectedLedgerCustomer(null);
           }}
           onSettleUdhar={onSettleUdhar}
           lang={lang}

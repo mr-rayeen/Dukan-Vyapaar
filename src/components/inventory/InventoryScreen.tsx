@@ -59,7 +59,6 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({
   const [showBulkDeleteConfirm, setShowBulkDeleteConfirm] = useState<boolean>(false);
   const [showBulkCategoryModal, setShowBulkCategoryModal] = useState<boolean>(false);
   const [customCategoryInput, setCustomCategoryInput] = useState<string>('');
-  const [bulkSuccessMessage, setBulkSuccessMessage] = useState<string | null>(null);
 
   // Long-press timer refs
   const longPressTimerRef = useRef<number | null>(null);
@@ -193,33 +192,19 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({
     if (onBulkUpdateCategory) {
       onBulkUpdateCategory(idsArray, trimmed);
     }
-    const count = idsArray.length;
     exitSelectionMode();
-    setBulkSuccessMessage(
-      lang === 'hi'
-        ? `${count} आइटम "${trimmed}" कैटेगरी में जोड़ दिए गए!`
-        : `${count} items moved to "${trimmed}" category!`
-    );
-    window.setTimeout(() => setBulkSuccessMessage(null), 3500);
   };
 
   // Confirm bulk delete
   const handleConfirmBulkDelete = () => {
     if (selectedIds.size === 0) return;
     const idsArray = Array.from(selectedIds);
-    const count = idsArray.length;
     if (onBulkDeleteProducts) {
       onBulkDeleteProducts(idsArray);
     } else if (onDeleteProduct) {
       idsArray.forEach((id) => onDeleteProduct(id));
     }
     exitSelectionMode();
-    setBulkSuccessMessage(
-      lang === 'hi'
-        ? `${count} आइटम सफलतापूर्वक हटा दिए गए!`
-        : `${count} items deleted successfully!`
-    );
-    window.setTimeout(() => setBulkSuccessMessage(null), 3500);
   };
 
   return (
@@ -252,23 +237,6 @@ export const InventoryScreen: React.FC<InventoryScreenProps> = ({
           </button>
         </div>
       </div>
-
-      {/* Bulk Action Success Toast */}
-      {bulkSuccessMessage && (
-        <div className="bg-emerald-600 text-white px-3.5 py-2.5 rounded-xl shadow-md flex items-center justify-between gap-2 text-xs font-black animate-in fade-in">
-          <div className="flex items-center gap-2">
-            <CheckCircle2 className="w-4 h-4 shrink-0" />
-            <span>{bulkSuccessMessage}</span>
-          </div>
-          <button
-            type="button"
-            onClick={() => setBulkSuccessMessage(null)}
-            className="p-0.5 hover:bg-emerald-700 rounded"
-          >
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
-      )}
 
       {/* Search & Quick Filters */}
       <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 shadow-2xs space-y-2.5">

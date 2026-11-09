@@ -170,7 +170,7 @@ export const DashboardScreen: React.FC<DashboardScreenProps> = ({
               className="bg-white text-emerald-800 hover:bg-emerald-50 font-extrabold text-xs px-3 py-2 rounded-xl shadow-md active:scale-95 transition flex items-center gap-1.5 shrink-0 whitespace-nowrap"
             >
               <PlusCircle className="w-4 h-4 text-emerald-600 shrink-0" />
-              <span className="whitespace-nowrap">{lang === 'hi' ? 'नया बिल' : '+ New Bill'}</span>
+              <span className="whitespace-nowrap">{lang === 'hi' ? 'नया बिल' : 'New Bill'}</span>
             </button>
           </div>
         </div>
