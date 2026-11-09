@@ -91,6 +91,7 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
   const [udharFilterQuery, setUdharFilterQuery] = useState('');
   const [billSearchQuery, setBillSearchQuery] = useState('');
   const [deletingBillId, setDeletingBillId] = useState<string | null>(null);
+  const [collectionViewMode, setCollectionViewMode] = useState<'datewise' | 'customers'>('datewise');
 
   // Customer Ledger Modal State
   const [selectedLedgerCustomer, setSelectedLedgerCustomer] = useState<{ name: string; phone?: string } | null>(null);
@@ -166,14 +167,18 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
     return list;
   }, [bills, udharFilterQuery]);
 
-  // Bills search by customer name, bill number, or date
+  // Bills search by customer name, bill number, payment method, or date — always sorted newest-first
   const filteredBills = useMemo(() => {
-    if (!billSearchQuery.trim()) return bills;
+    const sorted = [...bills].sort(
+      (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    );
+    if (!billSearchQuery.trim()) return sorted;
     const q = billSearchQuery.toLowerCase().trim();
-    return bills.filter((b) => {
+    return sorted.filter((b) => {
       const matchName = b.customerName.toLowerCase().includes(q);
       const matchPhone = b.customerPhone ? b.customerPhone.includes(q) : false;
       const matchBillNo = b.billNumber.toLowerCase().includes(q);
+      const matchPaymentMethod = b.paymentMethod.toLowerCase().includes(q);
 
       const d = new Date(b.createdAt);
       const localDateStr = d.toLocaleDateString().toLowerCase();
@@ -189,7 +194,7 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
         isoStr.includes(q) ||
         customDateStr.includes(q);
 
-      return matchName || matchPhone || matchBillNo || matchDate;
+      return matchName || matchPhone || matchBillNo || matchPaymentMethod || matchDate;
     });
   }, [bills, billSearchQuery]);
 
@@ -701,215 +706,343 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
                 </button>
               </div>
             ) : (
-              <div className="space-y-2">
-                {filteredBills.map((bill) => {
-                const isUdhar = bill.paymentMethod === 'udhar';
-                const paid = bill.paidAmount || (bill.isUdharPaid ? bill.totalAmount : 0);
-                const remaining = Math.max(0, bill.totalAmount - paid);
-                const isFullyPaid = !isUdhar || bill.isUdharPaid || remaining === 0;
-                const isPartPaid = isUdhar && paid > 0 && remaining > 0;
+              (() => {
+                // Helper to get YYYY-MM-DD in local time
+                const getLocalBillDateKey = (isoStr: string) => {
+                  const d = new Date(isoStr);
+                  if (isNaN(d.getTime())) return 'unknown';
+                  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+                    d.getDate()
+                  ).padStart(2, '0')}`;
+                };
+
+                const formatBillDateHeader = (dateKey: string) => {
+                  const todayKey = getLocalBillDateKey(new Date().toISOString());
+                  const yest = new Date();
+                  yest.setDate(yest.getDate() - 1);
+                  const yesterdayKey = getLocalBillDateKey(yest.toISOString());
+
+                  const [y, m, d] = dateKey.split('-').map(Number);
+                  const dt = new Date(y, (m || 1) - 1, d || 1);
+                  const formatted = dt.toLocaleDateString('en-IN', {
+                    day: '2-digit',
+                    month: 'short',
+                    year: 'numeric',
+                  });
+                  const weekday = dt.toLocaleDateString(lang === 'hi' ? 'hi-IN' : 'en-IN', {
+                    weekday: 'short',
+                  });
+
+                  if (dateKey === todayKey) {
+                    return lang === 'hi' ? `आज (Today) • ${formatted}` : `Today • ${formatted}`;
+                  }
+                  if (dateKey === yesterdayKey) {
+                    return lang === 'hi' ? `कल (Yesterday) • ${formatted}` : `Yesterday • ${formatted}`;
+                  }
+                  return `${formatted} (${weekday})`;
+                };
+
+                // Group already newest-first sorted filteredBills by dateKey
+                const billDateGroups: {
+                  dateKey: string;
+                  totalAmount: number;
+                  items: Bill[];
+                }[] = [];
+                const groupMap = new Map<
+                  string,
+                  { dateKey: string; totalAmount: number; items: Bill[] }
+                >();
+
+                filteredBills.forEach((bill) => {
+                  const dKey = getLocalBillDateKey(bill.createdAt);
+                  let grp = groupMap.get(dKey);
+                  if (!grp) {
+                    grp = { dateKey: dKey, totalAmount: 0, items: [] };
+                    groupMap.set(dKey, grp);
+                    billDateGroups.push(grp);
+                  }
+                  grp.items.push(bill);
+                  grp.totalAmount += bill.totalAmount;
+                });
 
                 return (
-                  <div
-                    key={bill.id}
-                    className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-2xs space-y-2 hover:border-emerald-300 dark:hover:border-emerald-700 transition"
-                  >
-                    <div
-                      className="flex items-start justify-between cursor-pointer"
-                      onClick={() => onViewBill && onViewBill(bill)}
-                    >
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-xs font-extrabold text-slate-900 dark:text-white">
-                            {bill.customerName}
-                          </span>
-                          <span
-                            className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase ${
-                              !isUdhar
-                                ? bill.paymentMethod === 'upi'
-                                  ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
-                                  : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                                : isFullyPaid
-                                ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
-                                : isPartPaid
-                                ? 'bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300'
-                                : 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300'
-                            }`}
-                          >
-                            {!isUdhar
-                              ? bill.paymentMethod
-                              : isFullyPaid
-                              ? (lang === 'hi' ? 'उधार चुकता' : 'Paid / Settled')
-                              : isPartPaid
-                              ? (lang === 'hi' ? `जमा ₹${paid}` : `Paid ₹${paid}`)
-                              : (lang === 'hi' ? 'उधार बाकी' : 'Udhar Due')}
-                          </span>
-                        </div>
-                        <div className="text-[10px] text-slate-400 mt-0.5">
-                          {bill.billNumber} • {new Date(bill.createdAt).toLocaleDateString()} {new Date(bill.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        </div>
-                      </div>
-
-                      <div className="text-right">
-                        {isPartPaid ? (
-                          <>
-                            <div className="text-sm font-black text-rose-600 dark:text-rose-400">
-                              ₹{remaining.toLocaleString('en-IN')} <span className="text-[10px] font-bold">{lang === 'hi' ? 'बाकी' : 'Due'}</span>
-                            </div>
-                            <div className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">
-                              {lang === 'hi' ? `बिल ₹${bill.totalAmount} (₹${paid} जमा)` : `Total ₹${bill.totalAmount} (₹${paid} paid)`}
-                            </div>
-                          </>
-                        ) : isUdhar && !isFullyPaid ? (
-                          <>
-                            <div className="text-sm font-black text-rose-600 dark:text-rose-400">
-                              ₹{bill.totalAmount.toLocaleString('en-IN')}
-                            </div>
-                            <div className="text-[10px] font-bold text-rose-600 dark:text-rose-400">
-                              {lang === 'hi' ? 'पूरा बकाया' : 'Full Pending'}
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="text-sm font-black text-slate-900 dark:text-white">
-                              ₹{bill.totalAmount.toLocaleString('en-IN')}
-                            </div>
-                            <div className="text-[10px] text-slate-500 dark:text-slate-400">
-                              {bill.items.length} items {isUdhar && isFullyPaid ? '• Cleared' : ''}
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    </div>
-
-                    {/* Part payment history logs inside bill if any */}
-                    {bill.payments && bill.payments.length > 0 && (
-                      <div className="bg-slate-50 dark:bg-slate-800/80 p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-[10px] space-y-1">
-                        <div className="flex justify-between font-bold text-teal-700 dark:text-teal-400">
-                          <span>{bill.payments.length} {lang === 'hi' ? 'किश्त जमा प्राप्त हुई' : 'Part Payments Received'}</span>
-                          <span>+₹{(bill.paidAmount || 0).toLocaleString('en-IN')}</span>
-                        </div>
-                        <div className="text-slate-500 dark:text-slate-400 truncate">
-                          {bill.payments.map((p) => `+₹${p.amount} (${p.paymentMethod})`).join(' • ')}
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Actions for this bill */}
-                    {deletingBillId === bill.id ? (
-                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
-                        <div className="p-2.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-900 rounded-xl flex items-center justify-between text-xs animate-in fade-in">
-                          <div className="min-w-0 flex-1 pr-2">
-                            <span className="text-[11px] font-bold text-rose-900 dark:text-rose-200 block truncate">
-                              {lang === 'hi' ? 'गलत बिल हटाएं?' : 'Delete wrong bill?'}
-                            </span>
-                            <span className="text-[10px] text-rose-700 dark:text-rose-400 block">
-                              {lang === 'hi' ? 'सामान गोदाम स्टॉक में वापस जुड़ जाएगा।' : 'Items will be restored to godown stock.'}
+                  <div className="space-y-3.5">
+                    {billDateGroups.map((group) => (
+                      <div
+                        key={group.dateKey}
+                        className="rounded-2xl border border-slate-200 dark:border-slate-800 overflow-hidden bg-slate-50/70 dark:bg-slate-900/50 shadow-2xs"
+                      >
+                        {/* Distinct Date Header Bar */}
+                        <div className="bg-gradient-to-r from-slate-900 via-slate-800 to-emerald-950 text-white px-3.5 py-2 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
+                            <span className="text-xs font-black tracking-wide">
+                              {formatBillDateHeader(group.dateKey)}
                             </span>
                           </div>
-                          <div className="flex items-center gap-1.5 shrink-0">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                if (onDeleteBill) onDeleteBill(bill.id);
-                                setDeletingBillId(null);
-                              }}
-                              className="px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs rounded-lg shadow-xs active:scale-95 transition"
-                            >
-                              {lang === 'hi' ? 'हटाएं' : 'Delete'}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => setDeletingBillId(null)}
-                              className="px-2.5 py-1.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-lg active:scale-95 transition"
-                            >
-                              {lang === 'hi' ? 'रद्द' : 'Cancel'}
-                            </button>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold bg-white/15 px-2 py-0.5 rounded-full text-slate-200">
+                              {group.items.length} {lang === 'hi' ? 'बिल' : 'Bills'}
+                            </span>
+                            <span className="text-xs font-black text-emerald-300">
+                              ₹{group.totalAmount.toLocaleString('en-IN')}
+                            </span>
                           </div>
                         </div>
-                      </div>
-                    ) : (
-                      <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs gap-1.5 flex-wrap">
-                        <span className="text-[10px] text-slate-600 dark:text-slate-400 font-medium truncate max-w-[140px]">
-                          {bill.items
-                            .map((i) => {
-                              let qty = '';
-                              if (i.cartonQty > 0 && i.pieceQty > 0) {
-                                qty = `${i.cartonQty} Box + ${i.pieceQty} Ladi`;
-                              } else if (i.cartonQty > 0) {
-                                qty = `${i.cartonQty} Box`;
-                              } else {
-                                qty = `${i.pieceQty} Ladi`;
-                              }
-                              return `${qty} ${i.productName}`;
-                            })
-                            .join(', ')}
-                        </span>
 
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          {isUdhar && !isFullyPaid && (
-                            <>
-                              <button
-                                type="button"
-                                onClick={() => setActivePaymentTarget({ bill, customerName: bill.customerName, customerPhone: bill.customerPhone })}
-                                className="px-2 py-1 bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 rounded-lg text-[10px] font-black shadow-xs flex items-center gap-1 transition"
-                                title={lang === 'hi' ? 'पार्ट पेमेंट जमा करें' : 'Record Part Payment'}
+                        {/* All Bills of this Date (Latest Time First) */}
+                        <div className="p-2 space-y-2">
+                          {group.items.map((bill) => {
+                            const isUdhar = bill.paymentMethod === 'udhar';
+                            const paid = bill.paidAmount || (bill.isUdharPaid ? bill.totalAmount : 0);
+                            const remaining = Math.max(0, bill.totalAmount - paid);
+                            const isFullyPaid = !isUdhar || bill.isUdharPaid || remaining === 0;
+                            const isPartPaid = isUdhar && paid > 0 && remaining > 0;
+
+                            return (
+                              <div
+                                key={bill.id}
+                                className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-3 shadow-2xs space-y-2 hover:border-emerald-300 dark:hover:border-emerald-700 transition"
                               >
-                                <Wallet className="w-3 h-3" />
-                                <span>{lang === 'hi' ? 'किश्त' : 'Part Pay'}</span>
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => onSettleUdhar(bill.id)}
-                                className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-lg text-[10px] font-black shadow-xs flex items-center gap-1 transition"
-                                title={lang === 'hi' ? 'पूर्ण चुकता' : 'Full Settle'}
-                              >
-                                <CheckCircle className="w-3 h-3" />
-                                <span>{lang === 'hi' ? 'चुकता' : 'Settle'}</span>
-                              </button>
-                            </>
-                          )}
-                          <button
-                            type="button"
-                            onClick={() => onViewBill && onViewBill(bill)}
-                            className="p-1.5 rounded-lg text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition active:scale-95"
-                            title="View / Print Bill"
-                          >
-                            <FileText className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => shareViaWhatsApp(bill, settings)}
-                            className="p-1.5 rounded-lg text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950 hover:bg-emerald-100 transition active:scale-95"
-                            title="WhatsApp"
-                          >
-                            <Share2 className="w-3.5 h-3.5" />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => generateBillPDF(bill, settings)}
-                            className="p-1.5 rounded-lg text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 transition active:scale-95"
-                            title="PDF"
-                          >
-                            <Download className="w-3.5 h-3.5" />
-                          </button>
-                          {onDeleteBill && (
-                            <button
-                              type="button"
-                              onClick={() => setDeletingBillId(bill.id)}
-                              className="p-1.5 rounded-lg text-rose-600 bg-rose-50 dark:bg-rose-950 hover:bg-rose-100 transition active:scale-95"
-                              title={lang === 'hi' ? 'गलत बिल हटाएं' : 'Delete Bill'}
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                          )}
+                                <div
+                                  className="flex items-start justify-between cursor-pointer"
+                                  onClick={() => onViewBill && onViewBill(bill)}
+                                >
+                                  <div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-xs font-extrabold text-slate-900 dark:text-white">
+                                        {bill.customerName}
+                                      </span>
+                                      <span
+                                        className={`text-[9px] font-black px-1.5 py-0.5 rounded uppercase ${
+                                          !isUdhar
+                                            ? bill.paymentMethod === 'upi'
+                                              ? 'bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300'
+                                              : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                                            : isFullyPaid
+                                            ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300'
+                                            : isPartPaid
+                                            ? 'bg-teal-100 text-teal-800 dark:bg-teal-950 dark:text-teal-300'
+                                            : 'bg-rose-100 text-rose-700 dark:bg-rose-950 dark:text-rose-300'
+                                        }`}
+                                      >
+                                        {!isUdhar
+                                          ? bill.paymentMethod
+                                          : isFullyPaid
+                                          ? lang === 'hi'
+                                            ? 'उधार चुकता'
+                                            : 'Paid / Settled'
+                                          : isPartPaid
+                                          ? lang === 'hi'
+                                            ? `जमा ₹${paid}`
+                                            : `Paid ₹${paid}`
+                                          : lang === 'hi'
+                                          ? 'उधार बाकी'
+                                          : 'Udhar Due'}
+                                      </span>
+                                    </div>
+                                    <div className="text-[10px] text-slate-400 mt-0.5 flex items-center gap-1.5 font-medium">
+                                      <span className="font-bold text-slate-600 dark:text-slate-300">
+                                        {new Date(bill.createdAt).toLocaleTimeString('en-IN', {
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                        })}
+                                      </span>
+                                      <span>•</span>
+                                      <span>{bill.billNumber}</span>
+                                    </div>
+                                  </div>
+
+                                  <div className="text-right">
+                                    {isPartPaid ? (
+                                      <>
+                                        <div className="text-sm font-black text-rose-600 dark:text-rose-400">
+                                          ₹{remaining.toLocaleString('en-IN')}{' '}
+                                          <span className="text-[10px] font-bold">
+                                            {lang === 'hi' ? 'बाकी' : 'Due'}
+                                          </span>
+                                        </div>
+                                        <div className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">
+                                          {lang === 'hi'
+                                            ? `बिल ₹${bill.totalAmount} (₹${paid} जमा)`
+                                            : `Total ₹${bill.totalAmount} (₹${paid} paid)`}
+                                        </div>
+                                      </>
+                                    ) : isUdhar && !isFullyPaid ? (
+                                      <>
+                                        <div className="text-sm font-black text-rose-600 dark:text-rose-400">
+                                          ₹{bill.totalAmount.toLocaleString('en-IN')}
+                                        </div>
+                                        <div className="text-[10px] font-bold text-rose-600 dark:text-rose-400">
+                                          {lang === 'hi' ? 'पूरा बकाया' : 'Full Pending'}
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <div className="text-sm font-black text-slate-900 dark:text-white">
+                                          ₹{bill.totalAmount.toLocaleString('en-IN')}
+                                        </div>
+                                        <div className="text-[10px] text-slate-500 dark:text-slate-400">
+                                          {bill.items.length} items{' '}
+                                          {isUdhar && isFullyPaid ? '• Cleared' : ''}
+                                        </div>
+                                      </>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Part payment history logs inside bill if any */}
+                                {bill.payments && bill.payments.length > 0 && (
+                                  <div className="bg-slate-50 dark:bg-slate-800/80 p-2 rounded-lg border border-slate-200 dark:border-slate-700 text-[10px] space-y-1">
+                                    <div className="flex justify-between font-bold text-teal-700 dark:text-teal-400">
+                                      <span>
+                                        {bill.payments.length}{' '}
+                                        {lang === 'hi'
+                                          ? 'किश्त जमा प्राप्त हुई'
+                                          : 'Part Payments Received'}
+                                      </span>
+                                      <span>+₹{(bill.paidAmount || 0).toLocaleString('en-IN')}</span>
+                                    </div>
+                                    <div className="text-slate-500 dark:text-slate-400 truncate">
+                                      {bill.payments
+                                        .map((p) => `+₹${p.amount} (${p.paymentMethod})`)
+                                        .join(' • ')}
+                                    </div>
+                                  </div>
+                                )}
+
+                                {/* Actions for this bill */}
+                                {deletingBillId === bill.id ? (
+                                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                                    <div className="p-2.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-900 rounded-xl flex items-center justify-between text-xs animate-in fade-in">
+                                      <div className="min-w-0 flex-1 pr-2">
+                                        <span className="text-[11px] font-bold text-rose-900 dark:text-rose-200 block truncate">
+                                          {lang === 'hi' ? 'गलत बिल हटाएं?' : 'Delete wrong bill?'}
+                                        </span>
+                                        <span className="text-[10px] text-rose-700 dark:text-rose-400 block">
+                                          {lang === 'hi'
+                                            ? 'सामान गोदाम स्टॉक में वापस जुड़ जाएगा।'
+                                            : 'Items will be restored to godown stock.'}
+                                        </span>
+                                      </div>
+                                      <div className="flex items-center gap-1.5 shrink-0">
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            if (onDeleteBill) onDeleteBill(bill.id);
+                                            setDeletingBillId(null);
+                                          }}
+                                          className="px-2.5 py-1.5 bg-rose-600 hover:bg-rose-700 text-white font-black text-xs rounded-lg shadow-xs active:scale-95 transition"
+                                        >
+                                          {lang === 'hi' ? 'हटाएं' : 'Delete'}
+                                        </button>
+                                        <button
+                                          type="button"
+                                          onClick={() => setDeletingBillId(null)}
+                                          className="px-2.5 py-1.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-lg active:scale-95 transition"
+                                        >
+                                          {lang === 'hi' ? 'रद्द' : 'Cancel'}
+                                        </button>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="pt-2 border-t border-slate-100 dark:border-slate-800 flex items-center justify-between text-xs gap-1.5 flex-wrap">
+                                    <span className="text-[10px] text-slate-600 dark:text-slate-400 font-medium truncate max-w-[140px]">
+                                      {bill.items
+                                        .map((i) => {
+                                          let qty = '';
+                                          if (i.cartonQty > 0 && i.pieceQty > 0) {
+                                            qty = `${i.cartonQty} Box + ${i.pieceQty} Ladi`;
+                                          } else if (i.cartonQty > 0) {
+                                            qty = `${i.cartonQty} Box`;
+                                          } else {
+                                            qty = `${i.pieceQty} Ladi`;
+                                          }
+                                          return `${qty} ${i.productName}`;
+                                        })
+                                        .join(', ')}
+                                    </span>
+
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                      {isUdhar && !isFullyPaid && (
+                                        <>
+                                          <button
+                                            type="button"
+                                            onClick={() =>
+                                              setActivePaymentTarget({
+                                                bill,
+                                                customerName: bill.customerName,
+                                                customerPhone: bill.customerPhone,
+                                              })
+                                            }
+                                            className="px-2 py-1 bg-amber-500 hover:bg-amber-600 active:scale-95 text-slate-950 rounded-lg text-[10px] font-black shadow-xs flex items-center gap-1 transition"
+                                            title={
+                                              lang === 'hi'
+                                                ? 'पार्ट पेमेंट जमा करें'
+                                                : 'Record Part Payment'
+                                            }
+                                          >
+                                            <Wallet className="w-3 h-3" />
+                                            <span>{lang === 'hi' ? 'किश्त' : 'Part Pay'}</span>
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => onSettleUdhar(bill.id)}
+                                            className="px-2 py-1 bg-emerald-600 hover:bg-emerald-700 active:scale-95 text-white rounded-lg text-[10px] font-black shadow-xs flex items-center gap-1 transition"
+                                            title={lang === 'hi' ? 'पूर्ण चुकता' : 'Full Settle'}
+                                          >
+                                            <CheckCircle className="w-3 h-3" />
+                                            <span>{lang === 'hi' ? 'चुकता' : 'Settle'}</span>
+                                          </button>
+                                        </>
+                                      )}
+                                      <button
+                                        type="button"
+                                        onClick={() => onViewBill && onViewBill(bill)}
+                                        className="p-1.5 rounded-lg text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 transition active:scale-95"
+                                        title="View / Print Bill"
+                                      >
+                                        <FileText className="w-3.5 h-3.5" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => shareViaWhatsApp(bill, settings)}
+                                        className="p-1.5 rounded-lg text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950 hover:bg-emerald-100 transition active:scale-95"
+                                        title="WhatsApp"
+                                      >
+                                        <Share2 className="w-3.5 h-3.5" />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        onClick={() => generateBillPDF(bill, settings)}
+                                        className="p-1.5 rounded-lg text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950 hover:bg-blue-100 transition active:scale-95"
+                                        title="PDF"
+                                      >
+                                        <Download className="w-3.5 h-3.5" />
+                                      </button>
+                                      {onDeleteBill && (
+                                        <button
+                                          type="button"
+                                          onClick={() => setDeletingBillId(bill.id)}
+                                          className="p-1.5 rounded-lg text-rose-600 bg-rose-50 dark:bg-rose-950 hover:bg-rose-100 transition active:scale-95"
+                                          title={lang === 'hi' ? 'गलत बिल हटाएं' : 'Delete Bill'}
+                                        >
+                                          <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            );
+                          })}
                         </div>
                       </div>
-                    )}
+                    ))}
                   </div>
                 );
-              })}
-            </div>
+              })()
             )}
           </div>
         </div>
@@ -939,16 +1072,16 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
             placeholder="Search customer name or phone..."
             value={udharFilterQuery}
             onChange={(e) => setUdharFilterQuery(e.target.value)}
-            className="w-full bg-white border border-slate-200 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-amber-500"
+            className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl px-3 py-2 text-xs font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-amber-500"
           />
 
           {/* Udhar List */}
           <div className="space-y-2">
             {outstandingBills.length === 0 ? (
-              <div className="bg-white border border-dashed border-slate-300 rounded-xl p-6 text-center text-slate-500 space-y-1">
+              <div className="bg-white dark:bg-slate-900 border border-dashed border-slate-300 dark:border-slate-800 rounded-xl p-6 text-center text-slate-500 dark:text-slate-400 space-y-1">
                 <CheckCircle className="w-8 h-8 text-emerald-500 mx-auto" />
-                <p className="text-xs font-bold text-slate-800">No Pending Udhar!</p>
-                <p className="text-[11px] text-slate-400">All customers have settled their credit balance.</p>
+                <p className="text-xs font-bold text-slate-800 dark:text-slate-200">No Pending Udhar!</p>
+                <p className="text-[11px] text-slate-400 dark:text-slate-500">All customers have settled their credit balance.</p>
               </div>
             ) : (
               outstandingBills.map((bill) => {
@@ -1006,9 +1139,9 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
 
                   {/* Settle Udhar Action Button */}
                   {deletingBillId === bill.id ? (
-                    <div className="pt-2 border-t border-slate-100">
-                      <div className="p-2 bg-rose-50 border border-rose-300 rounded-lg flex items-center justify-between text-xs animate-in fade-in">
-                        <span className="text-[11px] font-bold text-rose-800">
+                    <div className="pt-2 border-t border-slate-100 dark:border-slate-800">
+                      <div className="p-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 rounded-lg flex items-center justify-between text-xs animate-in fade-in">
+                        <span className="text-[11px] font-bold text-rose-800 dark:text-rose-300">
                           {lang === 'hi' ? 'उधार बिल हटाएं और माल वापस लें?' : 'Delete udhar bill & restore stock?'}
                         </span>
                         <div className="flex items-center gap-1.5 shrink-0">
@@ -1025,7 +1158,7 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
                           <button
                             type="button"
                             onClick={() => setDeletingBillId(null)}
-                            className="px-2 py-1 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded active:scale-95 transition"
+                            className="px-2 py-1 bg-slate-200 dark:bg-slate-800 hover:bg-slate-300 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 font-bold text-xs rounded active:scale-95 transition"
                           >
                             {lang === 'hi' ? 'रद्द' : 'Cancel'}
                           </button>
@@ -1154,248 +1287,603 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
             </div>
           </div>
 
-          {/* Search bar */}
-          <div className="relative">
-            <input
-              type="text"
-              placeholder={
-                lang === 'hi'
-                  ? 'ग्राहक का नाम या मोबाइल नंबर खोजें...'
-                  : 'Search customer collection by name or phone...'
-              }
-              value={udharFilterQuery}
-              onChange={(e) => setUdharFilterQuery(e.target.value)}
-              className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl px-3.5 py-2.5 text-xs font-semibold text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:border-teal-500 shadow-2xs"
-            />
-          </div>
-
-          {/* Customer Collections List */}
+          {/* Search bar & View Toggle */}
           <div className="space-y-2">
-            <div className="flex items-center justify-between px-1">
-              <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide flex items-center gap-1.5">
-                <Wallet className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
-                <span>
-                  {lang === 'hi'
-                    ? 'ग्राहक अनुसार कुल कलेक्शन (Tap to Open Ledger)'
-                    : 'Customer Collection History (Tap to Open Ledger)'}
-                </span>
-              </span>
-              <span className="text-[10px] text-slate-400 font-semibold">
-                {lang === 'hi' ? 'लेजर देखने हेतु टैप करें' : 'Tap card for full ledger'}
-              </span>
+            <div className="relative">
+              <Search className="w-4 h-4 text-slate-400 absolute left-3 top-2.5" />
+              <input
+                type="text"
+                placeholder={
+                  lang === 'hi'
+                    ? 'ग्राहक का नाम, मोबाइल, बिल नंबर या तारीख खोजें...'
+                    : 'Search by customer name, phone, bill # or date...'
+                }
+                value={udharFilterQuery}
+                onChange={(e) => setUdharFilterQuery(e.target.value)}
+                className="w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl pl-9 pr-8 py-2.5 text-xs font-semibold text-slate-800 dark:text-white placeholder-slate-400 focus:outline-none focus:border-teal-500 shadow-2xs"
+              />
+              {udharFilterQuery && (
+                <button
+                  type="button"
+                  onClick={() => setUdharFilterQuery('')}
+                  className="absolute right-2.5 top-2.5 text-slate-400 hover:text-slate-600"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
 
-            {/* Derive customer collection details */}
-            {(() => {
-              const customerMap = new Map<
+            {/* Toggle between Date-wise Received Payments (Default) and Customer Summary */}
+            <div className="grid grid-cols-2 gap-1.5 bg-slate-100 dark:bg-slate-800 p-1 rounded-xl">
+              <button
+                type="button"
+                onClick={() => setCollectionViewMode('datewise')}
+                className={`py-2 px-2.5 rounded-lg text-xs font-extrabold flex items-center justify-center gap-1.5 transition ${
+                  collectionViewMode === 'datewise'
+                    ? 'bg-teal-700 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-700/60'
+                }`}
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                <span>
+                  {lang === 'hi'
+                    ? 'तारीख अनुसार पेमेंट (Date-wise)'
+                    : 'Date-wise Payments'}
+                </span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setCollectionViewMode('customers')}
+                className={`py-2 px-2.5 rounded-lg text-xs font-extrabold flex items-center justify-center gap-1.5 transition ${
+                  collectionViewMode === 'customers'
+                    ? 'bg-teal-700 text-white shadow-xs'
+                    : 'text-slate-600 dark:text-slate-300 hover:bg-white/60 dark:hover:bg-slate-700/60'
+                }`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>
+                  {lang === 'hi'
+                    ? 'ग्राहक अनुसार खाता (By Customer)'
+                    : 'Customer Summary'}
+                </span>
+              </button>
+            </div>
+          </div>
+
+          {/* Collections Content */}
+          {(() => {
+            // 1. Build customer summary map & pending balance lookup
+            const customerMap = new Map<
+              string,
+              {
+                name: string;
+                phone?: string;
+                totalBought: number;
+                totalPaid: number;
+                totalDue: number;
+                billsCount: number;
+                pendingBillsCount: number;
+                partPaymentsCount: number;
+                partPaymentCash: number;
+                partPaymentUpi: number;
+                totalCollected: number;
+                lastPaymentDate: string;
+                latestPaymentNote?: string;
+              }
+            >();
+
+            // 2. Build flat list of all received payment entries across all dates
+            interface ReceivedPaymentItem {
+              id: string;
+              billId?: string;
+              billNumber: string;
+              customerName: string;
+              customerPhone?: string;
+              amount: number;
+              paymentMethod: 'cash' | 'upi';
+              notes: string;
+              timestamp: string;
+              isPartPayment: boolean;
+            }
+
+            const allReceivedPayments: ReceivedPaymentItem[] = [];
+
+            bills.forEach((b) => {
+              const key = b.customerName.trim().toLowerCase();
+              if (!key) return;
+              const existing = customerMap.get(key) || {
+                name: b.customerName,
+                phone: b.customerPhone,
+                totalBought: 0,
+                totalPaid: 0,
+                totalDue: 0,
+                billsCount: 0,
+                pendingBillsCount: 0,
+                partPaymentsCount: 0,
+                partPaymentCash: 0,
+                partPaymentUpi: 0,
+                totalCollected: 0,
+                lastPaymentDate: b.createdAt,
+                latestPaymentNote: undefined,
+              };
+
+              existing.billsCount += 1;
+              existing.totalBought += b.totalAmount;
+              if (!existing.phone && b.customerPhone) existing.phone = b.customerPhone;
+
+              // Process part payments attached to this bill
+              if (b.payments && b.payments.length > 0) {
+                b.payments.forEach((p, pIdx) => {
+                  const pTime = p.createdAt || p.date || b.updatedAt || b.createdAt;
+                  existing.partPaymentsCount += 1;
+                  existing.totalCollected += p.amount;
+                  if (p.paymentMethod === 'cash') {
+                    existing.partPaymentCash += p.amount;
+                  } else {
+                    existing.partPaymentUpi += p.amount;
+                  }
+                  if (
+                    !existing.lastPaymentDate ||
+                    new Date(pTime).getTime() > new Date(existing.lastPaymentDate).getTime()
+                  ) {
+                    existing.lastPaymentDate = pTime;
+                    if (p.notes) existing.latestPaymentNote = p.notes;
+                  }
+
+                  allReceivedPayments.push({
+                    id: p.id || `pay-${b.id}-${pIdx}`,
+                    billId: p.billId || b.id,
+                    billNumber: p.billNumber || b.billNumber,
+                    customerName: p.customerName || b.customerName,
+                    customerPhone: p.customerPhone || b.customerPhone,
+                    amount: p.amount,
+                    paymentMethod: p.paymentMethod,
+                    notes:
+                      p.notes ||
+                      (lang === 'hi' ? 'उधार किश्त जमा (Part Payment)' : 'Part Payment Received'),
+                    timestamp: pTime,
+                    isPartPayment: true,
+                  });
+                });
+              }
+
+              if (b.paymentMethod === 'udhar') {
+                const paid = b.paidAmount || (b.isUdharPaid ? b.totalAmount : 0);
+                const due = Math.max(0, b.totalAmount - paid);
+                existing.totalPaid += paid;
+                existing.totalDue += due;
+                if (due > 0 && !b.isUdharPaid) {
+                  existing.pendingBillsCount += 1;
+                }
+                // If settled fully without granular payments array
+                if (b.isUdharPaid && (!b.payments || b.payments.length === 0)) {
+                  const sTime = b.updatedAt || b.createdAt;
+                  existing.totalCollected += b.totalAmount;
+                  existing.partPaymentCash += b.totalAmount;
+                  if (new Date(sTime).getTime() > new Date(existing.lastPaymentDate).getTime()) {
+                    existing.lastPaymentDate = sTime;
+                  }
+                  allReceivedPayments.push({
+                    id: `settled-${b.id}`,
+                    billId: b.id,
+                    billNumber: b.billNumber,
+                    customerName: b.customerName,
+                    customerPhone: b.customerPhone,
+                    amount: b.totalAmount,
+                    paymentMethod: 'cash',
+                    notes: lang === 'hi' ? 'पूर्ण उधार चुकता (Full Settlement)' : 'Full Udhar Settled',
+                    timestamp: sTime,
+                    isPartPayment: true,
+                  });
+                }
+              } else {
+                // Direct cash or UPI sale collected at billing time
+                existing.totalPaid += b.totalAmount;
+                existing.totalCollected += b.totalAmount;
+                if (b.paymentMethod === 'cash') {
+                  existing.partPaymentCash += b.totalAmount;
+                } else {
+                  existing.partPaymentUpi += b.totalAmount;
+                }
+                if (new Date(b.createdAt).getTime() > new Date(existing.lastPaymentDate).getTime()) {
+                  existing.lastPaymentDate = b.createdAt;
+                }
+                if (!b.payments || b.payments.length === 0) {
+                  allReceivedPayments.push({
+                    id: `direct-${b.id}`,
+                    billId: b.id,
+                    billNumber: b.billNumber,
+                    customerName: b.customerName,
+                    customerPhone: b.customerPhone,
+                    amount: b.totalAmount,
+                    paymentMethod: b.paymentMethod === 'upi' ? 'upi' : 'cash',
+                    notes: lang === 'hi' ? 'नकद / तुरंत बिल भुगतान' : 'Paid at Billing',
+                    timestamp: b.createdAt,
+                    isPartPayment: false,
+                  });
+                }
+              }
+
+              customerMap.set(key, existing);
+            });
+
+            // MODE 1: DATE-WISE PAYMENTS (Latest payment on top, grouped under each Date header)
+            if (collectionViewMode === 'datewise') {
+              let filteredPayments = [...allReceivedPayments];
+
+              if (udharFilterQuery.trim()) {
+                const q = udharFilterQuery.toLowerCase().trim();
+                filteredPayments = filteredPayments.filter((p) => {
+                  const d = new Date(p.timestamp);
+                  const dateFormatted = d
+                    .toLocaleDateString('en-IN', {
+                      day: '2-digit',
+                      month: 'short',
+                      year: 'numeric',
+                    })
+                    .toLowerCase();
+                  return (
+                    p.customerName.toLowerCase().includes(q) ||
+                    (p.customerPhone && p.customerPhone.includes(q)) ||
+                    p.billNumber.toLowerCase().includes(q) ||
+                    p.notes.toLowerCase().includes(q) ||
+                    dateFormatted.includes(q)
+                  );
+                });
+              }
+
+              // Sort strictly by latest timestamp first (newest payment on top, oldest at bottom)
+              filteredPayments.sort(
+                (a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime()
+              );
+
+              // Group by local calendar date (YYYY-MM-DD), preserving newest-date-first order
+              const dateGroupsMap = new Map<
                 string,
                 {
-                  name: string;
-                  phone?: string;
-                  totalBought: number;
-                  totalPaid: number;
-                  totalDue: number;
-                  billsCount: number;
-                  pendingBillsCount: number;
-                  partPaymentsCount: number;
-                  partPaymentCash: number;
-                  partPaymentUpi: number;
-                  totalCollected: number;
-                  lastPaymentDate: string;
-                  latestPaymentNote?: string;
+                  dateKey: string;
+                  dateObj: Date;
+                  payments: ReceivedPaymentItem[];
+                  totalAmount: number;
                 }
               >();
 
-              bills.forEach((b) => {
-                const key = b.customerName.trim().toLowerCase();
-                if (!key) return;
-                const existing = customerMap.get(key) || {
-                  name: b.customerName,
-                  phone: b.customerPhone,
-                  totalBought: 0,
-                  totalPaid: 0,
-                  totalDue: 0,
-                  billsCount: 0,
-                  pendingBillsCount: 0,
-                  partPaymentsCount: 0,
-                  partPaymentCash: 0,
-                  partPaymentUpi: 0,
-                  totalCollected: 0,
-                  lastPaymentDate: b.createdAt,
-                  latestPaymentNote: undefined,
+              filteredPayments.forEach((pay) => {
+                const d = new Date(pay.timestamp);
+                const dateKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(
+                  2,
+                  '0'
+                )}-${String(d.getDate()).padStart(2, '0')}`;
+
+                const group = dateGroupsMap.get(dateKey) || {
+                  dateKey,
+                  dateObj: d,
+                  payments: [],
+                  totalAmount: 0,
                 };
-
-                existing.billsCount += 1;
-                existing.totalBought += b.totalAmount;
-                if (!existing.phone && b.customerPhone) existing.phone = b.customerPhone;
-
-                // Process part payments attached to this bill
-                if (b.payments && b.payments.length > 0) {
-                  b.payments.forEach((p) => {
-                    existing.partPaymentsCount += 1;
-                    existing.totalCollected += p.amount;
-                    if (p.paymentMethod === 'cash') {
-                      existing.partPaymentCash += p.amount;
-                    } else {
-                      existing.partPaymentUpi += p.amount;
-                    }
-                    if (
-                      !existing.lastPaymentDate ||
-                      new Date(p.createdAt || p.date) > new Date(existing.lastPaymentDate)
-                    ) {
-                      existing.lastPaymentDate = p.createdAt || p.date;
-                      if (p.notes) existing.latestPaymentNote = p.notes;
-                    }
-                  });
-                }
-
-                if (b.paymentMethod === 'udhar') {
-                  const paid = b.paidAmount || (b.isUdharPaid ? b.totalAmount : 0);
-                  const due = Math.max(0, b.totalAmount - paid);
-                  existing.totalPaid += paid;
-                  existing.totalDue += due;
-                  if (due > 0 && !b.isUdharPaid) {
-                    existing.pendingBillsCount += 1;
-                  }
-                  // If settled fully without granular payments array
-                  if (b.isUdharPaid && (!b.payments || b.payments.length === 0)) {
-                    existing.totalCollected += b.totalAmount;
-                  }
-                } else {
-                  // Direct cash or UPI sale is also collected at billing time
-                  existing.totalPaid += b.totalAmount;
-                  existing.totalCollected += b.totalAmount;
-                  if (b.paymentMethod === 'cash') {
-                    existing.partPaymentCash += b.totalAmount;
-                  } else {
-                    existing.partPaymentUpi += b.totalAmount;
-                  }
-                }
-
-                if (new Date(b.createdAt) > new Date(existing.lastPaymentDate)) {
-                  existing.lastPaymentDate = b.createdAt;
-                }
-
-                customerMap.set(key, existing);
+                group.payments.push(pay);
+                group.totalAmount += pay.amount;
+                dateGroupsMap.set(dateKey, group);
               });
 
-              let customerList = Array.from(customerMap.values());
-              if (udharFilterQuery.trim()) {
-                const q = udharFilterQuery.toLowerCase();
-                customerList = customerList.filter(
-                  (c) =>
-                    c.name.toLowerCase().includes(q) ||
-                    (c.phone && c.phone.includes(q))
-                );
-              }
+              const dateGroups = Array.from(dateGroupsMap.values());
 
-              // Sort by highest total collected amount first
-              customerList.sort((a, b) => b.totalCollected - a.totalCollected);
+              const todayKey = (() => {
+                const now = new Date();
+                return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(
+                  now.getDate()
+                ).padStart(2, '0')}`;
+              })();
 
-              if (customerList.length === 0) {
-                return (
+              const yesterdayKey = (() => {
+                const yest = new Date(Date.now() - 86400000);
+                return `${yest.getFullYear()}-${String(yest.getMonth() + 1).padStart(
+                  2,
+                  '0'
+                )}-${String(yest.getDate()).padStart(2, '0')}`;
+              })();
+
+              const formatGroupDateHeader = (dateKey: string, dateObj: Date) => {
+                const formatted = dateObj.toLocaleDateString('en-IN', {
+                  day: '2-digit',
+                  month: 'short',
+                  year: 'numeric',
+                });
+                const weekday = dateObj.toLocaleDateString('en-IN', { weekday: 'short' });
+                if (dateKey === todayKey) {
+                  return lang === 'hi' ? `आज (Today) • ${formatted}` : `Today • ${formatted}`;
+                }
+                if (dateKey === yesterdayKey) {
+                  return lang === 'hi'
+                    ? `कल (Yesterday) • ${formatted}`
+                    : `Yesterday • ${formatted}`;
+                }
+                return `${formatted} (${weekday})`;
+              };
+
+              return (
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between px-1">
+                    <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide flex items-center gap-1.5">
+                      <History className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                      <span>
+                        {lang === 'hi'
+                          ? 'तारीख अनुसार प्राप्त पेमेंट (Latest सबसे ऊपर)'
+                          : 'Received Payments by Date (Latest First)'}
+                      </span>
+                    </span>
+                    <span className="text-[10px] text-slate-400 font-semibold">
+                      {lang === 'hi' ? 'लेजर देखने हेतु टैप करें' : 'Tap any row for ledger'}
+                    </span>
+                  </div>
+
+                  {dateGroups.length === 0 ? (
+                    <div className="bg-white dark:bg-slate-800 border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-8 text-center text-slate-400">
+                      <Wallet className="w-8 h-8 mx-auto mb-2 opacity-40 text-teal-600" />
+                      <p className="font-bold text-xs">
+                        {lang === 'hi'
+                          ? 'इस खोज के लिए कोई पेमेंट रिकॉर्ड नहीं मिला।'
+                          : 'No payment records found.'}
+                      </p>
+                    </div>
+                  ) : (
+                    dateGroups.map((group) => (
+                      <div
+                        key={group.dateKey}
+                        className="bg-slate-50/80 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-800 rounded-2xl overflow-hidden shadow-2xs"
+                      >
+                        {/* Distinct Date Header Bar */}
+                        <div className="bg-gradient-to-r from-teal-800 to-slate-800 text-white px-3.5 py-2.5 flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-teal-300 shrink-0" />
+                            <span className="text-xs font-black tracking-wide">
+                              {formatGroupDateHeader(group.dateKey, group.dateObj)}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold bg-white/15 px-2 py-0.5 rounded-full text-teal-100">
+                              {group.payments.length}{' '}
+                              {lang === 'hi' ? 'पेमेंट' : group.payments.length === 1 ? 'Payment' : 'Payments'}
+                            </span>
+                            <span className="text-xs font-black text-emerald-300 bg-black/25 px-2.5 py-0.5 rounded-lg">
+                              +₹{group.totalAmount.toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* All Payments Received on This Date (Sorted Latest Time First) */}
+                        <div className="p-2.5 space-y-2">
+                          {group.payments.map((pay) => {
+                            const custSummary = customerMap.get(
+                              pay.customerName.trim().toLowerCase()
+                            );
+                            const remainingCustomerDue = custSummary ? custSummary.totalDue : 0;
+
+                            return (
+                              <div
+                                key={pay.id}
+                                onClick={() =>
+                                  setSelectedLedgerCustomer({
+                                    name: pay.customerName,
+                                    phone: pay.customerPhone,
+                                  })
+                                }
+                                className="p-3 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-xl hover:border-teal-500 hover:shadow-sm cursor-pointer transition active:scale-99 flex items-center justify-between gap-2.5 group"
+                              >
+                                <div className="flex items-start gap-2.5 min-w-0 flex-1">
+                                  <div className="w-9 h-9 rounded-xl bg-emerald-50 dark:bg-emerald-950/80 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 mt-0.5 group-hover:scale-105 transition">
+                                    <ArrowDownRight className="w-4 h-4" />
+                                  </div>
+
+                                  <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-1.5 flex-wrap">
+                                      <h4 className="font-black text-xs text-slate-900 dark:text-white truncate">
+                                        {pay.customerName}
+                                      </h4>
+                                      <span
+                                        className={`px-1.5 py-0.2 rounded text-[9px] font-black uppercase ${
+                                          pay.paymentMethod === 'cash'
+                                            ? 'bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300'
+                                            : 'bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300'
+                                        }`}
+                                      >
+                                        {pay.paymentMethod}
+                                      </span>
+                                      {pay.isPartPayment && (
+                                        <span className="px-1.5 py-0.2 rounded text-[9px] font-extrabold bg-teal-50 dark:bg-teal-950 text-teal-700 dark:text-teal-300 border border-teal-200 dark:border-teal-800">
+                                          {lang === 'hi' ? 'वसूली' : 'Recovery'}
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    <div className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400 mt-0.5 flex-wrap">
+                                      <span className="font-extrabold text-slate-700 dark:text-slate-300">
+                                        {new Date(pay.timestamp).toLocaleTimeString([], {
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                        })}
+                                      </span>
+                                      <span>•</span>
+                                      <span className="font-mono font-semibold text-blue-600 dark:text-blue-400">
+                                        {pay.billNumber}
+                                      </span>
+                                      {pay.notes && (
+                                        <>
+                                          <span>•</span>
+                                          <span className="truncate max-w-[140px]">{pay.notes}</span>
+                                        </>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="text-right shrink-0">
+                                  <span className="text-sm font-black text-emerald-600 dark:text-emerald-400 block">
+                                    +₹{pay.amount.toLocaleString('en-IN')}
+                                  </span>
+                                  {remainingCustomerDue > 0 ? (
+                                    <span className="text-[9px] font-extrabold text-rose-600 dark:text-rose-400 block">
+                                      {lang === 'hi' ? 'शेष बाकी:' : 'Bal Due:'} ₹
+                                      {remainingCustomerDue.toLocaleString('en-IN')}
+                                    </span>
+                                  ) : (
+                                    <span className="text-[9px] font-bold text-teal-600 dark:text-teal-400 block">
+                                      {lang === 'hi' ? 'खाता क्लियर' : 'All Clear'}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    ))
+                  )}
+                </div>
+              );
+            }
+
+            // MODE 2: CUSTOMER-WISE COLLECTION SUMMARY (Sorted by latest payment date first)
+            let customerList = Array.from(customerMap.values());
+            if (udharFilterQuery.trim()) {
+              const q = udharFilterQuery.toLowerCase();
+              customerList = customerList.filter(
+                (c) =>
+                  c.name.toLowerCase().includes(q) ||
+                  (c.phone && c.phone.includes(q))
+              );
+            }
+
+            // Sort by latest payment date first (newest on top, oldest at bottom)
+            customerList.sort(
+              (a, b) =>
+                new Date(b.lastPaymentDate).getTime() - new Date(a.lastPaymentDate).getTime()
+            );
+
+            return (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between px-1">
+                  <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide flex items-center gap-1.5">
+                    <Wallet className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
+                    <span>
+                      {lang === 'hi'
+                        ? 'ग्राहक अनुसार कुल कलेक्शन (Latest सबसे ऊपर)'
+                        : 'Customer Collection Summary (Latest First)'}
+                    </span>
+                  </span>
+                  <span className="text-[10px] text-slate-400 font-semibold">
+                    {lang === 'hi' ? 'लेजर देखने हेतु टैप करें' : 'Tap card for full ledger'}
+                  </span>
+                </div>
+
+                {customerList.length === 0 ? (
                   <div className="bg-white dark:bg-slate-800 border border-dashed border-slate-300 dark:border-slate-700 rounded-2xl p-8 text-center text-slate-400">
                     <Wallet className="w-8 h-8 mx-auto mb-2 opacity-40 text-teal-600" />
                     <p className="font-bold text-xs">
                       {lang === 'hi' ? 'कोई कलेक्शन रिकॉर्ड नहीं मिला।' : 'No collection records found.'}
                     </p>
                   </div>
-                );
-              }
-
-              return customerList.map((cust, idx) => (
-                <div
-                  key={idx}
-                  onClick={() => setSelectedLedgerCustomer({ name: cust.name, phone: cust.phone })}
-                  className="p-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-2xs hover:border-teal-500 hover:shadow-md cursor-pointer transition active:scale-99 space-y-2.5 group"
-                >
-                  {/* Customer Info & Prominent Collected Amount */}
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 flex items-center justify-center shrink-0 font-black text-sm group-hover:scale-105 transition">
-                        <User className="w-5 h-5" />
-                      </div>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-2">
-                          <h4 className="font-black text-sm text-slate-900 dark:text-white truncate">
-                            {cust.name}
-                          </h4>
-                          {cust.pendingBillsCount > 0 && (
-                            <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300">
-                              {cust.pendingBillsCount} {lang === 'hi' ? 'बिल बकाया' : 'due'}
-                            </span>
-                          )}
+                ) : (
+                  customerList.map((cust, idx) => (
+                    <div
+                      key={idx}
+                      onClick={() => setSelectedLedgerCustomer({ name: cust.name, phone: cust.phone })}
+                      className="p-3.5 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700/80 rounded-2xl shadow-2xs hover:border-teal-500 hover:shadow-md cursor-pointer transition active:scale-99 space-y-2.5 group"
+                    >
+                      {/* Customer Info & Prominent Collected Amount */}
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className="w-10 h-10 rounded-xl bg-teal-50 dark:bg-teal-950/80 text-teal-700 dark:text-teal-300 flex items-center justify-center shrink-0 font-black text-sm group-hover:scale-105 transition">
+                            <User className="w-5 h-5" />
+                          </div>
+                          <div className="min-w-0">
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-black text-sm text-slate-900 dark:text-white truncate">
+                                {cust.name}
+                              </h4>
+                              {cust.pendingBillsCount > 0 && (
+                                <span className="px-1.5 py-0.5 rounded text-[9px] font-black bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-300">
+                                  {cust.pendingBillsCount} {lang === 'hi' ? 'बिल बकाया' : 'due'}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                              {cust.phone && <span className="font-semibold">{cust.phone}</span>}
+                              {cust.phone && <span>•</span>}
+                              <span>
+                                {cust.partPaymentsCount > 0
+                                  ? `${cust.partPaymentsCount} ${lang === 'hi' ? 'किश्तें जमा' : 'payments'}`
+                                  : `${cust.billsCount} ${lang === 'hi' ? 'बिल कटे' : 'bills'}`}
+                              </span>
+                            </div>
+                          </div>
                         </div>
-                        <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
-                          {cust.phone && <span className="font-semibold">{cust.phone}</span>}
-                          {cust.phone && <span>•</span>}
-                          <span>
-                            {cust.partPaymentsCount > 0
-                              ? `${cust.partPaymentsCount} ${lang === 'hi' ? 'किश्तें जमा' : 'payments'}`
-                              : `${cust.billsCount} ${lang === 'hi' ? 'बिल कटे' : 'bills'}`}
+
+                        {/* Prominent Collection Amount */}
+                        <div className="text-right shrink-0">
+                          <span className="text-[10px] font-bold text-teal-700 dark:text-teal-400 uppercase block tracking-wider">
+                            {lang === 'hi' ? 'कुल जमा (Collected)' : 'Total Collected'}
+                          </span>
+                          <span className="text-base font-black text-emerald-600 dark:text-emerald-400 block">
+                            ₹{cust.totalCollected.toLocaleString('en-IN')}
                           </span>
                         </div>
                       </div>
-                    </div>
 
-                    {/* Prominent Collection Amount */}
-                    <div className="text-right shrink-0">
-                      <span className="text-[10px] font-bold text-teal-700 dark:text-teal-400 uppercase block tracking-wider">
-                        {lang === 'hi' ? 'कुल जमा (Collected)' : 'Total Collected'}
-                      </span>
-                      <span className="text-base font-black text-emerald-600 dark:text-emerald-400 block">
-                        ₹{cust.totalCollected.toLocaleString('en-IN')}
-                      </span>
-                    </div>
-                  </div>
+                      {/* Payment Details & Due Balance Strip */}
+                      <div className="p-2 bg-slate-50 dark:bg-slate-900/60 rounded-xl flex items-center justify-between text-[11px] gap-2">
+                        <div className="flex items-center gap-2 text-[10px] font-bold text-slate-600 dark:text-slate-300">
+                          <span className="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 rounded">
+                            Cash: ₹{cust.partPaymentCash.toLocaleString('en-IN')}
+                          </span>
+                          <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 rounded">
+                            UPI: ₹{cust.partPaymentUpi.toLocaleString('en-IN')}
+                          </span>
+                        </div>
 
-                  {/* Payment Details & Due Balance Strip */}
-                  <div className="p-2 bg-slate-50 dark:bg-slate-900/60 rounded-xl flex items-center justify-between text-[11px] gap-2">
-                    <div className="flex items-center gap-2 text-[10px] font-bold text-slate-600 dark:text-slate-300">
-                      <span className="px-1.5 py-0.5 bg-emerald-100 dark:bg-emerald-950 text-emerald-800 dark:text-emerald-300 rounded">
-                        Cash: ₹{cust.partPaymentCash.toLocaleString('en-IN')}
-                      </span>
-                      <span className="px-1.5 py-0.5 bg-blue-100 dark:bg-blue-950 text-blue-800 dark:text-blue-300 rounded">
-                        UPI: ₹{cust.partPaymentUpi.toLocaleString('en-IN')}
-                      </span>
-                    </div>
+                        <div className="text-right shrink-0">
+                          {cust.totalDue > 0 ? (
+                            <span className="text-[10px] font-black text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-2 py-0.5 rounded-md">
+                              {lang === 'hi' ? 'बाकी:' : 'Due:'} ₹{cust.totalDue.toLocaleString('en-IN')}
+                            </span>
+                          ) : (
+                            <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                              <CheckCircle className="w-3 h-3" />
+                              <span>All Clear</span>
+                            </span>
+                          )}
+                        </div>
+                      </div>
 
-                    <div className="text-right shrink-0">
-                      {cust.totalDue > 0 ? (
-                        <span className="text-[10px] font-black text-rose-600 dark:text-rose-400 bg-rose-50 dark:bg-rose-950/60 px-2 py-0.5 rounded-md">
-                          {lang === 'hi' ? 'बाकी:' : 'Due:'} ₹{cust.totalDue.toLocaleString('en-IN')}
+                      {/* Footer Action: Tap to view ledger & date */}
+                      <div className="flex items-center justify-between text-[10px] pt-1 text-slate-400 dark:text-slate-500">
+                        <span>
+                          {cust.lastPaymentDate
+                            ? `${lang === 'hi' ? 'अंतिम जमा' : 'Last Payment'}: ${new Date(
+                                cust.lastPaymentDate
+                              ).toLocaleDateString('en-IN', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric',
+                              })} • ${new Date(cust.lastPaymentDate).toLocaleTimeString([], {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}`
+                            : ''}
                         </span>
-                      ) : (
-                        <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
-                          <CheckCircle className="w-3 h-3" />
-                          <span>All Clear</span>
+
+                        <span className="font-extrabold text-teal-600 dark:text-teal-400 flex items-center gap-0.5 group-hover:underline">
+                          <BookOpen className="w-3 h-3" />
+                          <span>{lang === 'hi' ? 'खाता लेजर खोलें →' : 'View Full Ledger →'}</span>
                         </span>
-                      )}
+                      </div>
                     </div>
-                  </div>
-
-                  {/* Footer Action: Tap to view ledger & date */}
-                  <div className="flex items-center justify-between text-[10px] pt-1 text-slate-400 dark:text-slate-500">
-                    <span>
-                      {cust.lastPaymentDate
-                        ? `${lang === 'hi' ? 'अंतिम जमा' : 'Last Payment'}: ${new Date(
-                            cust.lastPaymentDate
-                          ).toLocaleDateString([], {
-                            day: 'numeric',
-                            month: 'short',
-                          })}`
-                        : ''}
-                    </span>
-
-                    <span className="font-extrabold text-teal-600 dark:text-teal-400 flex items-center gap-0.5 group-hover:underline">
-                      <BookOpen className="w-3 h-3" />
-                      <span>{lang === 'hi' ? 'खाता लेजर खोलें →' : 'View Full Ledger →'}</span>
-                    </span>
-                  </div>
-                </div>
-              ));
-            })()}
-          </div>
+                  ))
+                )}
+              </div>
+            );
+          })()}
         </div>
       )}
 
@@ -1403,27 +1891,27 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
       {activeReportTab === 'stock' && (
         <div className="space-y-3">
           {/* Stock Metrics Card */}
-          <div className="bg-white border border-slate-200 rounded-xl p-4 shadow-2xs space-y-3">
-            <h3 className="text-xs font-bold text-slate-700 uppercase tracking-wide">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-2xs space-y-3">
+            <h3 className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide">
               Godown Stock Valuation (माल का कुल मूल्य)
             </h3>
 
             <div className="grid grid-cols-2 gap-2.5">
-              <div className="bg-slate-50 p-2.5 rounded-lg">
-                <span className="text-[10px] font-bold text-slate-500 uppercase block">Total Boxes (कुल बॉक्स)</span>
-                <span className="text-base font-black text-slate-900 mt-0.5 block">{totalGodownCartons} Boxes</span>
+              <div className="bg-slate-50 dark:bg-slate-800 p-2.5 rounded-lg border border-slate-100 dark:border-slate-700/60">
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase block">Total Boxes (कुल बॉक्स)</span>
+                <span className="text-base font-black text-slate-900 dark:text-white mt-0.5 block">{totalGodownCartons} Boxes</span>
               </div>
-              <div className="bg-slate-50 p-2.5 rounded-lg">
-                <span className="text-[10px] font-bold text-slate-500 uppercase block">Total Ladi (कुल लड़ी)</span>
-                <span className="text-base font-black text-slate-900 mt-0.5 block">{totalGodownPieces.toLocaleString('en-IN')} Ladi</span>
+              <div className="bg-slate-50 dark:bg-slate-800 p-2.5 rounded-lg border border-slate-100 dark:border-slate-700/60">
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase block">Total Ladi (कुल लड़ी)</span>
+                <span className="text-base font-black text-slate-900 dark:text-white mt-0.5 block">{totalGodownPieces.toLocaleString('en-IN')} Ladi</span>
               </div>
-              <div className="bg-blue-50 p-2.5 rounded-lg">
-                <span className="text-[10px] font-bold text-blue-800 uppercase block">Purchase Cost</span>
-                <span className="text-base font-black text-blue-950 mt-0.5 block">₹{Math.round(totalStockPurchaseCost).toLocaleString('en-IN')}</span>
+              <div className="bg-blue-50 dark:bg-blue-950/40 p-2.5 rounded-lg border border-blue-100 dark:border-blue-900/50">
+                <span className="text-[10px] font-bold text-blue-800 dark:text-blue-300 uppercase block">Purchase Cost</span>
+                <span className="text-base font-black text-blue-950 dark:text-blue-100 mt-0.5 block">₹{Math.round(totalStockPurchaseCost).toLocaleString('en-IN')}</span>
               </div>
-              <div className="bg-emerald-50 p-2.5 rounded-lg">
-                <span className="text-[10px] font-bold text-emerald-800 uppercase block">Selling Value</span>
-                <span className="text-base font-black text-emerald-950 mt-0.5 block">₹{Math.round(totalStockSaleValue).toLocaleString('en-IN')}</span>
+              <div className="bg-emerald-50 dark:bg-emerald-950/40 p-2.5 rounded-lg border border-emerald-100 dark:border-emerald-900/50">
+                <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 uppercase block">Selling Value</span>
+                <span className="text-base font-black text-emerald-950 dark:text-emerald-100 mt-0.5 block">₹{Math.round(totalStockSaleValue).toLocaleString('en-IN')}</span>
               </div>
             </div>
 
@@ -1442,7 +1930,7 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
 
           {/* Product-wise Stock Table */}
           <div className="space-y-1.5">
-            <span className="text-xs font-bold text-slate-700 uppercase tracking-wide block px-1">
+            <span className="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide block px-1">
               Product-wise Inventory Breakdown
             </span>
             <div className="space-y-1.5">
@@ -1453,17 +1941,17 @@ export const ReportsScreen: React.FC<ReportsScreenProps> = ({
                 return (
                   <div
                     key={p.id}
-                    className="p-2.5 bg-white border border-slate-200 rounded-xl flex items-center justify-between text-xs"
+                    className="p-2.5 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl flex items-center justify-between text-xs"
                   >
                     <div className="min-w-0 flex-1">
-                      <div className="font-extrabold text-slate-900 truncate">{p.name}</div>
-                      <div className="text-[10px] text-slate-500 mt-0.5">
+                      <div className="font-extrabold text-slate-900 dark:text-white truncate">{p.name}</div>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
                         Pack: 1 Box = {p.packSize} Ladi • {cartons} Box + {loosePieces} Ladi
                       </div>
                     </div>
                     <div className="text-right pl-2">
-                      <div className="font-bold text-slate-900">{p.totalPieces} Ladi</div>
-                      <div className="text-[10px] text-slate-500">₹{Math.round(totalCost)} cost</div>
+                      <div className="font-bold text-slate-900 dark:text-white">{p.totalPieces} Ladi</div>
+                      <div className="text-[10px] text-slate-500 dark:text-slate-400">₹{Math.round(totalCost)} cost</div>
                     </div>
                   </div>
                 );

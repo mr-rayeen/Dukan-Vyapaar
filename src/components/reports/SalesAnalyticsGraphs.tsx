@@ -136,7 +136,7 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
   return (
     <div className="space-y-3.5 animate-in fade-in duration-200">
       {/* Timeframe Selector Pill Bar */}
-      <div className="bg-slate-100 p-1 rounded-xl grid grid-cols-4 gap-1 text-xs font-bold text-slate-600">
+      <div className="bg-slate-100 dark:bg-slate-800/90 p-1 rounded-xl grid grid-cols-4 gap-1 text-xs font-bold text-slate-600 dark:text-slate-400">
         <button
           type="button"
           onClick={() => {
@@ -145,8 +145,8 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
           }}
           className={`py-2 rounded-lg transition active:scale-95 text-center ${
             timeframe === 'daily'
-              ? 'bg-white text-slate-900 shadow-xs font-black'
-              : 'hover:text-slate-900'
+              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-black'
+              : 'hover:text-slate-900 dark:hover:text-white'
           }`}
         >
           {lang === 'hi' ? 'दैनिक (Day)' : 'Day'}
@@ -160,8 +160,8 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
           }}
           className={`py-2 rounded-lg transition active:scale-95 text-center ${
             timeframe === 'monthly'
-              ? 'bg-white text-slate-900 shadow-xs font-black'
-              : 'hover:text-slate-900'
+              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-black'
+              : 'hover:text-slate-900 dark:hover:text-white'
           }`}
         >
           {lang === 'hi' ? 'मासिक (Month)' : 'Month'}
@@ -175,8 +175,8 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
           }}
           className={`py-2 rounded-lg transition active:scale-95 text-center ${
             timeframe === 'quarterly'
-              ? 'bg-white text-slate-900 shadow-xs font-black'
-              : 'hover:text-slate-900'
+              ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-black'
+              : 'hover:text-slate-900 dark:hover:text-white'
           }`}
         >
           {lang === 'hi' ? 'तिमाही (Quarter)' : 'Quarter'}
@@ -191,7 +191,7 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
           className={`py-2 rounded-lg transition active:scale-95 text-center ${
             timeframe === 'udhar'
               ? 'bg-amber-500 text-slate-950 shadow-xs font-black'
-              : 'hover:text-slate-900'
+              : 'hover:text-slate-900 dark:hover:text-white'
           }`}
         >
           {lang === 'hi' ? 'उधार ट्रैकर' : 'Udhar Track'}
@@ -200,33 +200,33 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
 
       {/* Main KPI Highlights */}
       <div className="grid grid-cols-3 gap-2 text-xs">
-        <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-2.5">
-          <span className="text-[10px] font-bold text-emerald-800 uppercase block">Cash (नकद)</span>
-          <div className="text-sm font-black text-emerald-950 mt-0.5">₹{totalCash.toLocaleString('en-IN')}</div>
-          <span className="text-[10px] text-emerald-700 font-semibold">{cashPercent}% of total</span>
+        <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800/70 rounded-xl p-2.5">
+          <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 uppercase block">Cash (नकद)</span>
+          <div className="text-sm font-black text-emerald-950 dark:text-emerald-100 mt-0.5">₹{totalCash.toLocaleString('en-IN')}</div>
+          <span className="text-[10px] text-emerald-700 dark:text-emerald-400 font-semibold">{cashPercent}% of total</span>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-xl p-2.5">
-          <span className="text-[10px] font-bold text-blue-800 uppercase block">UPI (ऑनलाइन)</span>
-          <div className="text-sm font-black text-blue-950 mt-0.5">₹{totalUpi.toLocaleString('en-IN')}</div>
-          <span className="text-[10px] text-blue-700 font-semibold">{upiPercent}% of total</span>
+        <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800/70 rounded-xl p-2.5">
+          <span className="text-[10px] font-bold text-blue-800 dark:text-blue-300 uppercase block">UPI (ऑनलाइन)</span>
+          <div className="text-sm font-black text-blue-950 dark:text-blue-100 mt-0.5">₹{totalUpi.toLocaleString('en-IN')}</div>
+          <span className="text-[10px] text-blue-700 dark:text-blue-400 font-semibold">{upiPercent}% of total</span>
         </div>
 
-        <div className="bg-amber-50 border border-amber-200 rounded-xl p-2.5">
-          <span className="text-[10px] font-bold text-amber-800 uppercase block">Udhar (उधार)</span>
-          <div className="text-sm font-black text-amber-950 mt-0.5">₹{totalUdhar.toLocaleString('en-IN')}</div>
-          <span className="text-[10px] text-amber-700 font-semibold">{udharPercent}% of total</span>
+        <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800/70 rounded-xl p-2.5">
+          <span className="text-[10px] font-bold text-amber-800 dark:text-amber-300 uppercase block">Udhar (उधार)</span>
+          <div className="text-sm font-black text-amber-950 dark:text-amber-100 mt-0.5">₹{totalUdhar.toLocaleString('en-IN')}</div>
+          <span className="text-[10px] text-amber-700 dark:text-amber-400 font-semibold">{udharPercent}% of total</span>
         </div>
       </div>
 
       {/* CHART VIEW FOR DAILY / MONTHLY / QUARTERLY */}
       {timeframe !== 'udhar' && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-3">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xs space-y-3">
           {/* Subheader / Range Filters */}
           <div className="flex items-center justify-between">
             <div>
-              <h3 className="text-xs font-extrabold text-slate-900 flex items-center gap-1.5">
-                <BarChart3 className="w-4 h-4 text-emerald-600" />
+              <h3 className="text-xs font-extrabold text-slate-900 dark:text-white flex items-center gap-1.5">
+                <BarChart3 className="w-4 h-4 text-emerald-600 dark:text-emerald-400" />
                 <span>
                   {timeframe === 'daily'
                     ? lang === 'hi'
@@ -241,14 +241,14 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
                     : 'Quarterly Sales (Q1-Q4)'}
                 </span>
               </h3>
-              <p className="text-[10px] text-slate-400 mt-0.5">
+              <p className="text-[10px] text-slate-400 dark:text-slate-500 mt-0.5">
                 Tap on any bar to see detailed Cash, UPI & Udhar split
               </p>
             </div>
 
             {/* Range Toggle if Daily */}
             {timeframe === 'daily' && (
-              <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg text-[10px] font-bold text-slate-600">
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg text-[10px] font-bold text-slate-600 dark:text-slate-400">
                 {[7, 14, 30].map((days) => (
                   <button
                     key={days}
@@ -259,8 +259,8 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
                     }}
                     className={`px-2 py-0.5 rounded ${
                       dailyRangeDays === days
-                        ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
-                        : 'hover:text-slate-900'
+                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs font-extrabold'
+                        : 'hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
                     {days}D
@@ -271,7 +271,7 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
 
             {/* Range Toggle if Monthly */}
             {timeframe === 'monthly' && (
-              <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-lg text-[10px] font-bold text-slate-600">
+              <div className="flex items-center gap-1 bg-slate-100 dark:bg-slate-800 p-0.5 rounded-lg text-[10px] font-bold text-slate-600 dark:text-slate-400">
                 {[6, 12].map((m) => (
                   <button
                     key={m}
@@ -282,8 +282,8 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
                     }}
                     className={`px-2 py-0.5 rounded ${
                       monthlyRangeMonths === m
-                        ? 'bg-white text-slate-900 shadow-2xs font-extrabold'
-                        : 'hover:text-slate-900'
+                        ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-2xs font-extrabold'
+                        : 'hover:text-slate-900 dark:hover:text-white'
                     }`}
                   >
                     {m}M
@@ -296,7 +296,7 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
           {/* Interactive Stacked Bar Chart */}
           <div className="relative pt-2">
             {/* Legend */}
-            <div className="flex items-center justify-end gap-3 text-[10px] font-bold text-slate-600 mb-2">
+            <div className="flex items-center justify-end gap-3 text-[10px] font-bold text-slate-600 dark:text-slate-400 mb-2">
               <div className="flex items-center gap-1">
                 <span className="w-2.5 h-2.5 rounded-xs bg-emerald-500" />
                 <span>Cash</span>
@@ -312,16 +312,16 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
             </div>
 
             {/* Chart Area */}
-            <div className="h-44 w-full flex items-end gap-1.5 sm:gap-2 border-b border-slate-200 pb-2 relative">
+            <div className="h-44 w-full flex items-end gap-1.5 sm:gap-2 border-b border-slate-200 dark:border-slate-800 pb-2 relative">
               {/* Background horizontal guide lines */}
               <div className="absolute inset-0 flex flex-col justify-between pointer-events-none opacity-30">
-                <div className="border-b border-dashed border-slate-300 w-full flex justify-end text-[9px] text-slate-400 pr-1">
+                <div className="border-b border-dashed border-slate-300 dark:border-slate-700 w-full flex justify-end text-[9px] text-slate-400 dark:text-slate-500 pr-1">
                   ₹{(maxTotal / 1000).toFixed(0)}k
                 </div>
-                <div className="border-b border-dashed border-slate-300 w-full flex justify-end text-[9px] text-slate-400 pr-1">
+                <div className="border-b border-dashed border-slate-300 dark:border-slate-700 w-full flex justify-end text-[9px] text-slate-400 dark:text-slate-500 pr-1">
                   ₹{(maxTotal / 2000).toFixed(0)}k
                 </div>
-                <div className="border-b border-dashed border-slate-300 w-full" />
+                <div className="border-b border-dashed border-slate-300 dark:border-slate-700 w-full" />
               </div>
 
               {/* Bars */}
@@ -347,7 +347,7 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
                       style={{ height: `${safeHeight}%` }}
                       className={`w-full max-w-[32px] rounded-t-md overflow-hidden flex flex-col-reverse transition-all duration-200 ${
                         isSelected
-                          ? 'ring-2 ring-slate-900 ring-offset-1 scale-105'
+                          ? 'ring-2 ring-slate-900 dark:ring-white ring-offset-1 dark:ring-offset-slate-900 scale-105'
                           : 'group-hover:opacity-90'
                       }`}
                     >
@@ -377,14 +377,14 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
                       )}
                       {/* Empty filler if zero */}
                       {item.total === 0 && (
-                        <div className="bg-slate-200 w-full h-full" />
+                        <div className="bg-slate-200 dark:bg-slate-800 w-full h-full" />
                       )}
                     </div>
 
                     {/* Bottom Label */}
                     <span
                       className={`text-[9px] mt-1.5 truncate max-w-full text-center font-bold ${
-                        isSelected ? 'text-slate-900 font-black' : 'text-slate-500'
+                        isSelected ? 'text-slate-900 dark:text-white font-black' : 'text-slate-500 dark:text-slate-400'
                       }`}
                     >
                       {item.label}
@@ -396,7 +396,7 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
 
             {/* Selected Bar Details Card */}
             {selectedPoint && (
-              <div className="mt-3 p-3 bg-slate-900 text-white rounded-xl text-xs space-y-2 animate-in fade-in">
+              <div className="mt-3 p-3 bg-slate-900 dark:bg-slate-800 text-white rounded-xl text-xs space-y-2 animate-in fade-in border border-slate-800 dark:border-slate-700">
                 <div className="flex items-center justify-between">
                   <span className="font-extrabold text-emerald-400">
                     {selectedPoint.subLabel}
@@ -406,7 +406,7 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
                   </span>
                 </div>
 
-                <div className="grid grid-cols-4 gap-2 pt-1 border-t border-slate-800 text-[11px]">
+                <div className="grid grid-cols-4 gap-2 pt-1 border-t border-slate-800 dark:border-slate-700 text-[11px]">
                   <div>
                     <span className="text-[9px] text-slate-400 block">Total</span>
                     <strong className="text-white">₹{selectedPoint.total}</strong>
@@ -434,19 +434,19 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
       {timeframe === 'udhar' && (
         <div className="space-y-3.5">
           {/* Udhar Health & Recovery Meter Card */}
-          <div className="bg-white border border-amber-200 rounded-2xl p-4 shadow-2xs space-y-3">
+          <div className="bg-white dark:bg-slate-900 border border-amber-200 dark:border-amber-800/70 rounded-2xl p-4 shadow-2xs space-y-3">
             <div className="flex items-center justify-between">
               <div>
-                <span className="text-[10px] font-bold text-amber-800 uppercase tracking-wide">
+                <span className="text-[10px] font-bold text-amber-800 dark:text-amber-400 uppercase tracking-wide">
                   {lang === 'hi' ? 'उधार रिकवरी रिपोर्ट' : 'Credit Recovery Health'}
                 </span>
-                <h3 className="text-base font-black text-slate-900 mt-0.5">
-                  ₹{udharMetrics.totalPendingUdhar.toLocaleString('en-IN')} <span className="text-xs font-semibold text-rose-600">Pending</span>
+                <h3 className="text-base font-black text-slate-900 dark:text-white mt-0.5">
+                  ₹{udharMetrics.totalPendingUdhar.toLocaleString('en-IN')} <span className="text-xs font-semibold text-rose-600 dark:text-rose-400">Pending</span>
                 </h3>
               </div>
 
               <div className="text-right">
-                <span className="text-xs font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-lg border border-emerald-200">
+                <span className="text-xs font-black text-emerald-700 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
                   {udharMetrics.recoveryRate.toFixed(0)}% Recovered
                 </span>
               </div>
@@ -454,7 +454,7 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
 
             {/* Progress Bar of Recovery */}
             <div className="space-y-1">
-              <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex">
+              <div className="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex">
                 <div
                   style={{ width: `${udharMetrics.recoveryRate}%` }}
                   className="bg-emerald-500 h-full transition-all duration-500"
@@ -466,26 +466,26 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
                   title="Pending Udhar"
                 />
               </div>
-              <div className="flex justify-between text-[10px] font-bold text-slate-500">
-                <span className="text-emerald-700">₹{udharMetrics.totalUdharSettled.toLocaleString('en-IN')} Settled ({udharMetrics.settledCount} bills)</span>
-                <span className="text-rose-600">₹{udharMetrics.totalPendingUdhar.toLocaleString('en-IN')} Unpaid ({udharMetrics.pendingCount} bills)</span>
+              <div className="flex justify-between text-[10px] font-bold text-slate-500 dark:text-slate-400">
+                <span className="text-emerald-700 dark:text-emerald-400">₹{udharMetrics.totalUdharSettled.toLocaleString('en-IN')} Settled ({udharMetrics.settledCount} bills)</span>
+                <span className="text-rose-600 dark:text-rose-400">₹{udharMetrics.totalPendingUdhar.toLocaleString('en-IN')} Unpaid ({udharMetrics.pendingCount} bills)</span>
               </div>
             </div>
           </div>
 
           {/* Customer-wise Outstanding Udhar Graph */}
-          <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-3">
+          <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xs space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wide">
+              <span className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wide">
                 {lang === 'hi' ? 'ग्राहक-वार बकाया ग्राफ़ (Top Borrowers)' : 'Customer-wise Pending Udhar'}
               </span>
-              <span className="text-[10px] text-slate-400">
+              <span className="text-[10px] text-slate-400 dark:text-slate-500">
                 {customerUdhar.length} total customers
               </span>
             </div>
 
             {customerUdhar.length === 0 ? (
-              <div className="p-6 text-center text-slate-400 text-xs">
+              <div className="p-6 text-center text-slate-400 dark:text-slate-500 text-xs">
                 {lang === 'hi' ? 'कोई बकाया उधार नहीं है!' : 'No pending customer credit!'}
               </div>
             ) : (
@@ -497,11 +497,11 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
                   return (
                     <div key={idx} className="space-y-1">
                       <div className="flex items-center justify-between text-xs font-bold">
-                        <span className="text-slate-900 truncate max-w-[180px]">
+                        <span className="text-slate-900 dark:text-white truncate max-w-[180px]">
                           {cust.customerName}
                         </span>
                         <div className="flex items-center gap-2">
-                          <span className="text-rose-600 font-black">
+                          <span className="text-rose-600 dark:text-rose-400 font-black">
                             ₹{cust.totalPending.toLocaleString('en-IN')}
                           </span>
                           {cust.customerPhone && (
@@ -512,7 +512,7 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
                                 const bill = bills.find((b) => b.customerName.toLowerCase() === cust.customerName.toLowerCase());
                                 if (bill) shareViaWhatsApp(bill, settings);
                               }}
-                              className="p-1 rounded text-emerald-700 bg-emerald-50 hover:bg-emerald-100"
+                              className="p-1 rounded text-emerald-700 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-950/50 hover:bg-emerald-100 dark:hover:bg-emerald-900/50"
                               title="Send Reminder on WhatsApp"
                             >
                               <Share2 className="w-3 h-3" />
@@ -522,13 +522,13 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
                       </div>
 
                       {/* Bar indicator */}
-                      <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
+                      <div className="h-2 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                         <div
                           style={{ width: `${Math.max(widthPercent, 5)}%` }}
                           className="bg-amber-500 h-full rounded-full transition-all duration-300"
                         />
                       </div>
-                      <div className="flex justify-between text-[9px] text-slate-400">
+                      <div className="flex justify-between text-[9px] text-slate-400 dark:text-slate-500">
                         <span>{cust.pendingBillsCount} pending bills</span>
                         <span>Settled: ₹{cust.totalSettled.toLocaleString('en-IN')}</span>
                       </div>
@@ -542,13 +542,13 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
       )}
 
       {/* Revenue Breakdown Proportions Strip */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-2.5">
-        <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wide block">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xs space-y-2.5">
+        <span className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wide block">
           {lang === 'hi' ? 'भुगतान माध्यम वितरण (Payment Mode Split)' : 'Payment Method Share'}
         </span>
 
         {/* Proportional Strip */}
-        <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden flex shadow-inner">
+        <div className="h-3 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden flex shadow-inner">
           <div
             style={{ width: `${cashPercent}%` }}
             className="bg-emerald-500 h-full"
@@ -566,7 +566,7 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
           />
         </div>
 
-        <div className="grid grid-cols-3 gap-2 text-center text-[10px] font-bold text-slate-600 pt-1">
+        <div className="grid grid-cols-3 gap-2 text-center text-[10px] font-bold text-slate-600 dark:text-slate-300 pt-1">
           <div className="flex items-center justify-center gap-1">
             <span className="w-2 h-2 rounded-full bg-emerald-500" />
             <span>Cash ({cashPercent}%)</span>
@@ -584,12 +584,12 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
 
       {/* Top 5 Best-Selling Products */}
       {topProducts.length > 0 && (
-        <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-3">
+        <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xs space-y-3">
           <div className="flex items-center justify-between">
-            <span className="text-xs font-extrabold text-slate-900 uppercase tracking-wide">
+            <span className="text-xs font-extrabold text-slate-900 dark:text-white uppercase tracking-wide">
               {lang === 'hi' ? 'सर्वाधिक बिकने वाले सामान (Top Selling)' : 'Top Selling Products'}
             </span>
-            <Package className="w-4 h-4 text-slate-400" />
+            <Package className="w-4 h-4 text-slate-400 dark:text-slate-500" />
           </div>
 
           <div className="space-y-2">
@@ -599,20 +599,20 @@ export const SalesAnalyticsGraphs: React.FC<SalesAnalyticsGraphsProps> = ({
               return (
                 <div key={idx} className="space-y-1">
                   <div className="flex items-center justify-between text-xs">
-                    <span className="font-bold text-slate-900 truncate max-w-[200px]">
+                    <span className="font-bold text-slate-900 dark:text-white truncate max-w-[200px]">
                       {idx + 1}. {p.productName}
                     </span>
-                    <span className="font-black text-slate-900">
+                    <span className="font-black text-slate-900 dark:text-white">
                       ₹{p.totalRevenue.toLocaleString('en-IN')}
                     </span>
                   </div>
-                  <div className="h-1.5 w-full bg-slate-100 rounded-full overflow-hidden">
+                  <div className="h-1.5 w-full bg-slate-100 dark:bg-slate-800 rounded-full overflow-hidden">
                     <div
                       style={{ width: `${Math.max(widthPct, 4)}%` }}
                       className="bg-emerald-500 h-full rounded-full"
                     />
                   </div>
-                  <div className="flex justify-between text-[10px] text-slate-500">
+                  <div className="flex justify-between text-[10px] text-slate-500 dark:text-slate-400">
                     <span>{p.totalPieces} Ladi sold</span>
                     <span>{p.billCount} bills</span>
                   </div>

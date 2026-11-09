@@ -75,6 +75,7 @@ export interface Bill {
 
 export interface SupplierPurchaseItem {
   productName: string;
+  category?: string; // Category selected or created during bill review
   matchedProductId?: string; // If already in master
   isNewProduct: boolean;
   packSize: number; // Saved pack size if existing, or chosen by user if new

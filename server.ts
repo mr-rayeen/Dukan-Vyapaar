@@ -3,7 +3,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
-import { GoogleGenAI, Type } from '@google/genai';
+import { GoogleGenAI, ThinkingLevel, Type } from '@google/genai';
 
 dotenv.config();
 
@@ -32,13 +32,12 @@ app.post('/api/ocr-bill', async (req, res) => {
 
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      console.warn('GEMINI_API_KEY not configured, using smart OCR simulation response');
       return res.json({
         supplierName: 'Shree Ganesh Wholesale Distributors',
         invoiceNumber: 'GW-2026-904',
         invoiceDate: new Date().toISOString().split('T')[0],
         totalBillAmount: 18450,
-        confidenceNotes: 'Sample simulated OCR bill items (Configure GEMINI_API_KEY in Secrets for live photo extraction).',
+        confidenceNotes: 'Sample simulated OCR bill items.',
         items: [
           {
             productName: 'Parle-G Gold Biscuits (100g)',
@@ -60,10 +59,10 @@ app.post('/api/ocr-bill', async (req, res) => {
             rateType: 'carton',
             totalAmount: 10080,
             confidence: 'high',
-            suggestedPackSize: 48,
+            suggestedPackSize: 21,
           },
           {
-            productName: 'Tata Salt Vaccum Evaporated (1kg)',
+            productName: 'Tata Salt Vacuum Evaporated (1kg)',
             rawQuantityText: '5 Bags (Carton)',
             cartonQty: 5,
             pieceQty: 0,
@@ -71,7 +70,7 @@ app.post('/api/ocr-bill', async (req, res) => {
             rateType: 'carton',
             totalAmount: 2750,
             confidence: 'medium',
-            suggestedPackSize: 25,
+            suggestedPackSize: 10,
           },
           {
             productName: 'Dettol Original Soap (75g)',
@@ -82,7 +81,7 @@ app.post('/api/ocr-bill', async (req, res) => {
             rateType: 'carton',
             totalAmount: 2740,
             confidence: 'low',
-            suggestedPackSize: 16,
+            suggestedPackSize: 12,
           },
         ],
       });
@@ -90,42 +89,60 @@ app.post('/api/ocr-bill', async (req, res) => {
 
     const ai = new GoogleGenAI({
       apiKey,
+      apiVersion: 'v1beta',
       httpOptions: {
+        apiVersion: 'v1beta',
         headers: {
           'User-Agent': 'aistudio-build',
         },
       },
     });
 
-    // Clean base64 data url prefix if present
-    const cleanBase64 = imageBase64.includes(',')
-      ? imageBase64.split(',')[1]
-      : imageBase64;
+    // Clean base64 data url prefix if present and detect actual mimeType
+    let effectiveMimeType = mimeType;
+    let cleanBase64 = imageBase64;
+    if (imageBase64.includes(',')) {
+      const [header, dataPart] = imageBase64.split(',');
+      cleanBase64 = dataPart;
+      const mimeMatch = header.match(/data:([^;]+);/);
+      if (mimeMatch && mimeMatch[1]) {
+        effectiveMimeType = mimeMatch[1];
+      }
+    }
 
-    const promptText = `
-You are an expert AI for Indian small shopkeepers, FMCG distributors, and wholesale traders.
-Analyze this supplier invoice / purchase bill photo (it could be printed, handwritten, kaccha parchi, tax invoice, or challan).
+    const promptText = `Extract all line items from this wholesale/retail purchase bill or estimate into a JSON object.
+Return ONLY valid JSON with this exact structure:
+{
+  "supplierName": "Billed to / Supplier / Party name on bill",
+  "invoiceNumber": "Bill or Estimate number if present, else EST-001",
+  "invoiceDate": "YYYY-MM-DD",
+  "totalBillAmount": 0,
+  "items": [
+    {
+      "productName": "Exact item description from bill",
+      "cartonQty": 10,
+      "pieceQty": 0,
+      "rate": 820,
+      "rateType": "carton",
+      "totalAmount": 8200,
+      "suggestedPackSize": 21,
+      "category": "Namkeen",
+      "confidence": "high"
+    }
+  ]
+}
+Rules:
+- Extract EVERY row in the table in exact order.
+- QTY column is cartonQty (boxes/bags/peti), pieceQty is 0 unless loose pieces are specified.
+- Price column is rate (rateType: "carton"), Amount column is totalAmount.
+- For category, pick one of: "Namkeen", "Snacks & Chips", "Kurkure & Fryums", "Biscuit", "Confectionery", "Spices & Masala", "General".
+- For suggestedPackSize, use 21 for Namkeen/Mixture/Peanut/Bhujia/Chips/Snacks unless another pack size is clear.`;
 
-Extract all line items accurately.
-For each item:
-1. Product Name: Clean standard product brand and name (e.g., 'Parle-G Biscuits', 'Fortune Mustard Oil 1L').
-2. Carton Quantity: Number of Cartons / Boxes / Cases / Peti / Bags. If the bill specifies cartons/cases, extract the carton number. If it specifies pieces/units only, set cartonQty to 0 and put quantity in pieceQty.
-3. Piece Quantity: Any loose pieces or single units (e.g. if '2 ctn 6 pcs', cartonQty is 2, pieceQty is 6).
-4. Rate: The purchase rate as billed.
-5. Rate Type: 'carton' or 'piece'.
-6. Total Amount for that line item.
-7. Suggested Pack Size: If the packaging indicates pieces per carton (e.g., '24x100g', '1x48', '12s', 'Case of 24'), detect the pack size number (like 12, 24, 48). Otherwise null.
-8. Confidence: 'high', 'medium', or 'low' (set to 'low' if handwritten or blurry text).
-
-Also extract supplierName, invoiceNumber, invoiceDate (YYYY-MM-DD format if possible), and totalBillAmount.
-`;
-
-    const response = await ai.models.generateContent({
-      model: 'gemini-3.8-flash',
-      contents: [
+    const contentsPayload = {
+      parts: [
         {
           inlineData: {
-            mimeType,
+            mimeType: effectiveMimeType,
             data: cleanBase64,
           },
         },
@@ -133,44 +150,60 @@ Also extract supplierName, invoiceNumber, invoiceDate (YYYY-MM-DD format if poss
           text: promptText,
         },
       ],
-      config: {
-        responseMimeType: 'application/json',
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            supplierName: { type: Type.STRING },
-            invoiceNumber: { type: Type.STRING },
-            invoiceDate: { type: Type.STRING },
-            totalBillAmount: { type: Type.NUMBER },
-            confidenceNotes: { type: Type.STRING },
-            items: {
-              type: Type.ARRAY,
-              items: {
-                type: Type.OBJECT,
-                properties: {
-                  productName: { type: Type.STRING },
-                  rawQuantityText: { type: Type.STRING },
-                  cartonQty: { type: Type.NUMBER },
-                  pieceQty: { type: Type.NUMBER },
-                  rate: { type: Type.NUMBER },
-                  rateType: { type: Type.STRING },
-                  totalAmount: { type: Type.NUMBER },
-                  confidence: { type: Type.STRING },
-                  suggestedPackSize: { type: Type.NUMBER },
-                },
-                required: ['productName', 'cartonQty', 'pieceQty', 'rate'],
-              },
-            },
-          },
-          required: ['supplierName', 'items'],
-        },
-      },
-    });
+    };
 
-    const parsed = JSON.parse(response.text || '{}');
-    return res.json(parsed);
+    const callModel = async (modelName: string, thinkingLevel: ThinkingLevel) => {
+      const response = await ai.models.generateContent({
+        model: modelName,
+        contents: contentsPayload,
+        config: {
+          responseMimeType: 'application/json',
+          thinkingConfig: { thinkingLevel },
+        },
+      });
+      const text = response?.text?.trim();
+      if (!text) {
+        throw new Error(`Empty response from ${modelName}`);
+      }
+      const cleaned = text
+        .replace(/^```json\s*/i, '')
+        .replace(/^```\s*/i, '')
+        .replace(/\s*```$/i, '')
+        .trim();
+      const parsed = JSON.parse(cleaned);
+      if (!parsed || !Array.isArray(parsed.items)) {
+        throw new Error(`Invalid JSON structure from ${modelName}`);
+      }
+      return parsed;
+    };
+
+    // Race gemini-3.1-flash-lite (MINIMAL thinking) and gemini-3.8-flash (LOW thinking) in parallel
+    // so whichever responds first wins immediately (typically 3-6 seconds even for 25-item bills).
+    let parsedResult: any = null;
+    try {
+      parsedResult = await Promise.any([
+        callModel('gemini-3.1-flash-lite', ThinkingLevel.MINIMAL),
+        callModel('gemini-3.8-flash', ThinkingLevel.LOW),
+      ]);
+    } catch (aggregateErr: any) {
+      // Final fallback to gemini-flash-latest without thinkingConfig
+      const fallbackRes = await ai.models.generateContent({
+        model: 'gemini-flash-latest',
+        contents: contentsPayload,
+        config: {
+          responseMimeType: 'application/json',
+        },
+      });
+      const cleaned = (fallbackRes?.text || '{}')
+        .replace(/^```json\s*/i, '')
+        .replace(/^```\s*/i, '')
+        .replace(/\s*```$/i, '')
+        .trim();
+      parsedResult = JSON.parse(cleaned);
+    }
+
+    return res.json(parsedResult);
   } catch (error: any) {
-    console.error('Error processing OCR bill:', error);
     return res.status(500).json({
       error: 'Failed to process supplier bill',
       message: error?.message || 'Unknown error',

@@ -204,6 +204,57 @@ export default function App() {
     setMovements([...newMovements, ...movements]);
   };
 
+  // Delete Supplier Purchase Bill & Revert Added Stock from Inventory
+  const handleDeletePurchase = (purchaseId: string) => {
+    const purchaseToDelete = purchases.find((p) => p.id === purchaseId);
+    if (!purchaseToDelete) return;
+
+    let updatedProducts = [...products];
+    const newMovements: StockMovement[] = [];
+
+    purchaseToDelete.items.forEach((item) => {
+      const piecesToDeduct = (item.cartonQty * item.packSize) + item.pieceQty;
+      updatedProducts = updatedProducts.map((p) => {
+        const isMatch =
+          (item.matchedProductId && p.id === item.matchedProductId) ||
+          p.name.trim().toLowerCase() === item.productName.trim().toLowerCase();
+        if (isMatch) {
+          const nextTotal = Math.max(0, p.totalPieces - piecesToDeduct);
+          newMovements.push({
+            id: generateUniqueId(`mov-${p.id}`),
+            productId: p.id,
+            productName: p.name,
+            type: 'adjustment',
+            cartonQty: item.cartonQty,
+            pieceQty: item.pieceQty,
+            totalPiecesDelta: -piecesToDeduct,
+            remainingTotalPieces: nextTotal,
+            referenceId: purchaseToDelete.invoiceNumber,
+            notes: `Purchase Bill Deleted: ${purchaseToDelete.invoiceNumber} (${purchaseToDelete.supplierName})`,
+            timestamp: new Date().toISOString(),
+          });
+          return {
+            ...p,
+            totalPieces: nextTotal,
+            updatedAt: new Date().toISOString(),
+          };
+        }
+        return p;
+      });
+    });
+
+    const updatedPurchases = purchases.filter((p) => p.id !== purchaseId);
+    const updatedMovements = [...newMovements, ...movements];
+
+    setProducts(updatedProducts);
+    setPurchases(updatedPurchases);
+    setMovements(updatedMovements);
+
+    saveStoredProducts(updatedProducts);
+    saveStoredPurchases(updatedPurchases);
+    saveStoredMovements(updatedMovements);
+  };
+
   // Save / Update Product Master
   const handleSaveProduct = (product: Product, isNew: boolean) => {
     if (isNew) {
@@ -297,6 +348,42 @@ export default function App() {
     setSelectedProductForDetail(null);
     setIsProductFormOpen(false);
     setProductToEdit(null);
+  };
+
+  const handleBulkDeleteProducts = (productIds: string[]) => {
+    const idSet = new Set(productIds);
+    setProducts((prev) => {
+      const updated = prev.filter((p) => !idSet.has(p.id));
+      saveStoredProducts(updated);
+      return updated;
+    });
+    if (selectedProductForDetail && idSet.has(selectedProductForDetail.id)) {
+      setSelectedProductForDetail(null);
+    }
+    if (productToEdit && idSet.has(productToEdit.id)) {
+      setIsProductFormOpen(false);
+      setProductToEdit(null);
+    }
+  };
+
+  const handleBulkUpdateCategory = (productIds: string[], newCategory: string) => {
+    const trimmedCat = newCategory.trim();
+    if (!trimmedCat) return;
+    const idSet = new Set(productIds);
+    const nowIso = new Date().toISOString();
+    setProducts((prev) => {
+      const updated = prev.map((p) =>
+        idSet.has(p.id)
+          ? {
+              ...p,
+              category: trimmedCat,
+              updatedAt: nowIso,
+            }
+          : p
+      );
+      saveStoredProducts(updated);
+      return updated;
+    });
   };
 
   // Handle Delete Bill (Cancel wrong bill & restore deducted stock back to godown)
@@ -600,13 +687,17 @@ export default function App() {
                 setOpenDetailWithAddStock(true);
               }}
               onDeleteProduct={handleDeleteProduct}
+              onBulkDeleteProducts={handleBulkDeleteProducts}
+              onBulkUpdateCategory={handleBulkUpdateCategory}
             />
           )}
 
           {currentTab === 'scan' && (
             <ScanBillScreen
               products={products}
+              purchases={purchases}
               onConfirmPurchase={handleConfirmPurchase}
+              onDeletePurchase={handleDeletePurchase}
               lang={lang}
             />
           )}

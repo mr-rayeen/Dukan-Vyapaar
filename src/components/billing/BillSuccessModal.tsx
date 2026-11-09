@@ -225,9 +225,9 @@ export const BillSuccessModal: React.FC<BillSuccessModalProps> = ({
             <button
               type="button"
               onClick={() => generateBillPDF(bill, settings)}
-              className="w-full py-2.5 px-4 bg-white border border-slate-300 hover:bg-slate-50 active:scale-98 text-slate-800 rounded-xl font-bold text-xs shadow-2xs flex items-center justify-center gap-2 transition"
+              className="w-full py-2.5 px-4 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 active:scale-98 text-slate-800 dark:text-slate-100 rounded-xl font-bold text-xs shadow-2xs flex items-center justify-center gap-2 transition"
             >
-              <FileDown className="w-4 h-4 text-blue-600" />
+              <FileDown className="w-4 h-4 text-blue-600 dark:text-blue-400" />
               <span>{lang === 'hi' ? 'PDF इनवॉइस डाउनलोड करें' : 'Download PDF Invoice'}</span>
             </button>
 
@@ -235,9 +235,9 @@ export const BillSuccessModal: React.FC<BillSuccessModalProps> = ({
             <button
               type="button"
               onClick={() => setShowThermalPreview(!showThermalPreview)}
-              className="w-full py-2.5 px-4 bg-slate-100 hover:bg-slate-200 active:scale-98 text-slate-700 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition"
+              className="w-full py-2.5 px-4 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 active:scale-98 text-slate-700 dark:text-slate-200 rounded-xl font-bold text-xs flex items-center justify-center gap-2 transition"
             >
-              <Printer className="w-4 h-4 text-slate-600" />
+              <Printer className="w-4 h-4 text-slate-600 dark:text-slate-400" />
               <span>
                 {showThermalPreview
                   ? 'Hide Printer Preview'
@@ -279,11 +279,11 @@ export const BillSuccessModal: React.FC<BillSuccessModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-3 bg-slate-50 border-t border-slate-100">
+        <div className="p-3 bg-slate-50 dark:bg-slate-800/90 border-t border-slate-100 dark:border-slate-800">
           <button
             type="button"
             onClick={onClose}
-            className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl transition"
+            className="w-full py-2.5 bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white font-bold text-xs rounded-xl transition"
           >
             {lang === 'hi' ? 'नया बिल बनाएं (Done)' : 'New Bill (Done)'}
           </button>

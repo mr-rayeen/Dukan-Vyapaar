@@ -544,12 +544,104 @@ export function saveStoredMovements(movements: StockMovement[]): void {
   localStorage.setItem(STORAGE_KEYS.MOVEMENTS, JSON.stringify(movements));
 }
 
+export const INITIAL_PURCHASES: SupplierPurchase[] = [
+  {
+    id: 'pur-demo-1',
+    invoiceNumber: 'PB-2026-8841',
+    supplierName: 'Shree Ganesh FMCG Distributors',
+    invoiceDate: new Date(Date.now() - 3600000 * 5).toISOString().split('T')[0],
+    totalAmount: 7200,
+    scannedAt: new Date(Date.now() - 3600000 * 5).toISOString(),
+    items: [
+      {
+        productName: 'Parle-G Gold Biscuits (100g)',
+        matchedProductId: 'prod-1',
+        isNewProduct: false,
+        category: 'Biscuits & Snacks',
+        packSize: 24,
+        isPackSizeLocked: true,
+        cartonQty: 10,
+        pieceQty: 0,
+        rate: 240,
+        rateType: 'carton',
+        totalAmount: 2400,
+        confidence: 'high',
+        salePriceCarton: 280,
+        salePricePiece: 12,
+      },
+      {
+        productName: 'Maggi 2-Minute Masala Noodles (70g)',
+        matchedProductId: 'prod-2',
+        isNewProduct: false,
+        category: 'Instant Food',
+        packSize: 48,
+        isPackSizeLocked: true,
+        cartonQty: 8,
+        pieceQty: 0,
+        rate: 600,
+        rateType: 'carton',
+        totalAmount: 4800,
+        confidence: 'high',
+        salePriceCarton: 660,
+        salePricePiece: 14,
+      },
+    ],
+  },
+  {
+    id: 'pur-demo-2',
+    invoiceNumber: 'PB-2026-8790',
+    supplierName: 'Monarko Namkeen Wholesale Agency',
+    invoiceDate: new Date(Date.now() - 86400000 * 2).toISOString().split('T')[0],
+    totalAmount: 9250,
+    scannedAt: new Date(Date.now() - 86400000 * 2).toISOString(),
+    items: [
+      {
+        productName: 'Tata Salt Vaccum Evaporated (1kg)',
+        matchedProductId: 'prod-3',
+        isNewProduct: false,
+        category: 'Staples & Spices',
+        packSize: 25,
+        isPackSizeLocked: true,
+        cartonQty: 10,
+        pieceQty: 0,
+        rate: 550,
+        rateType: 'carton',
+        totalAmount: 5500,
+        confidence: 'high',
+        salePriceCarton: 680,
+        salePricePiece: 28,
+      },
+      {
+        productName: "Frooti Fresh 'N' Juicy Mango (160ml)",
+        matchedProductId: 'prod-5',
+        isNewProduct: false,
+        category: 'Beverages',
+        packSize: 30,
+        isPackSizeLocked: true,
+        cartonQty: 15,
+        pieceQty: 0,
+        rate: 250,
+        rateType: 'carton',
+        totalAmount: 3750,
+        confidence: 'high',
+        salePriceCarton: 290,
+        salePricePiece: 10,
+      },
+    ],
+  },
+];
+
 export function getStoredPurchases(): SupplierPurchase[] {
   try {
     const raw = localStorage.getItem(STORAGE_KEYS.PURCHASES);
-    return raw ? JSON.parse(raw) : [];
+    if (!raw) {
+      localStorage.setItem(STORAGE_KEYS.PURCHASES, JSON.stringify(INITIAL_PURCHASES));
+      return INITIAL_PURCHASES;
+    }
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : INITIAL_PURCHASES;
   } catch {
-    return [];
+    return INITIAL_PURCHASES;
   }
 }
 
@@ -646,6 +738,6 @@ export function resetAppToDemoData(): void {
   localStorage.setItem(STORAGE_KEYS.SETTINGS, JSON.stringify(DEFAULT_SETTINGS));
   localStorage.setItem(STORAGE_KEYS.EXPENSES, JSON.stringify(INITIAL_EXPENSES));
   localStorage.setItem(STORAGE_KEYS.MOVEMENTS, JSON.stringify([]));
-  localStorage.setItem(STORAGE_KEYS.PURCHASES, JSON.stringify([]));
+  localStorage.setItem(STORAGE_KEYS.PURCHASES, JSON.stringify(INITIAL_PURCHASES));
 }
 

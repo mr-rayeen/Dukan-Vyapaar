@@ -14,6 +14,7 @@ import {
   ShieldCheck,
   Sparkles,
   FileDown,
+  AlertCircle,
 } from 'lucide-react';
 
 interface PWAInstallModalProps {
@@ -29,22 +30,31 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
 }) => {
   const { isInstallable, isInstalled, isIOS, install } = usePWAInstall();
   const [installSuccess, setInstallSuccess] = useState(false);
-  const [copiedLink, setCopiedLink] = useState(false);
+  const [copiedType, setCopiedType] = useState<'dev' | 'pre' | null>(null);
   const [activeTab, setActiveTab] = useState<'webapk' | 'apkfile'>('webapk');
   const [downloadingLauncher, setDownloadingLauncher] = useState(false);
 
   if (!isOpen) return null;
 
-  // Use the public shared app URL or current origin for phone installation
-  const appUrl =
+  // Current active origin (works immediately in logged-in session)
+  const currentOrigin =
     typeof window !== 'undefined'
-      ? window.location.origin.includes('ais-dev-')
-        ? window.location.origin.replace('ais-dev-', 'ais-pre-')
-        : window.location.origin
-      : 'https://ais-pre-keszuztslacjj6fe73osqn-933720006345.asia-east1.run.app';
+      ? window.location.origin
+      : 'https://ais-dev-keszuztslacjj6fe73osqn-933720006345.asia-east1.run.app';
+
+  const devUrl = currentOrigin.includes('ais-pre-')
+    ? currentOrigin.replace('ais-pre-', 'ais-dev-')
+    : currentOrigin;
+
+  const publicShareUrl = currentOrigin.includes('ais-dev-')
+    ? currentOrigin.replace('ais-dev-', 'ais-pre-')
+    : 'https://ais-pre-keszuztslacjj6fe73osqn-933720006345.asia-east1.run.app';
+
+  // Use current working origin by default so it never 404s before Share is toggled
+  const primaryUrl = currentOrigin;
 
   const qrCodeUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&margin=8&data=${encodeURIComponent(
-    appUrl
+    primaryUrl
   )}`;
 
   const handleInstallClick = async () => {
@@ -57,29 +67,28 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
     }
   };
 
-  const handleCopyLink = async () => {
+  const handleCopyUrl = async (urlToCopy: string, type: 'dev' | 'pre') => {
     try {
-      await navigator.clipboard.writeText(appUrl);
-      setCopiedLink(true);
-      setTimeout(() => setCopiedLink(false), 2500);
+      await navigator.clipboard.writeText(urlToCopy);
+      setCopiedType(type);
+      setTimeout(() => setCopiedType(null), 2500);
     } catch {
-      // Fallback copy
       const input = document.createElement('input');
-      input.value = appUrl;
+      input.value = urlToCopy;
       document.body.appendChild(input);
       input.select();
       document.execCommand('copy');
       document.body.removeChild(input);
-      setCopiedLink(true);
-      setTimeout(() => setCopiedLink(false), 2500);
+      setCopiedType(type);
+      setTimeout(() => setCopiedType(null), 2500);
     }
   };
 
   const handleShareWhatsApp = () => {
     const msg =
       lang === 'hi'
-        ? `*DukaanVyapar Mobile App (APK)* 📲\nअपने फोन के Chrome ब्राउज़र में यह लिंक खोलें और "Install App" पर टैप करें:\n${appUrl}`
-        : `*DukaanVyapar Mobile App (APK)* 📲\nOpen this link in Chrome on your Android phone and tap "Install App":\n${appUrl}`;
+        ? `*DukaanVyapar Mobile App (APK)* 📲\nअपने फोन के Chrome ब्राउज़र में यह लिंक खोलें और "Install App" पर टैप करें:\n\n1. Direct Link (Logged-in): ${devUrl}\n2. Shared Link (After enabling Share in AI Studio): ${publicShareUrl}`
+        : `*DukaanVyapar Mobile App (APK)* 📲\nOpen this link in Chrome on your Android phone and tap "Install App":\n\n1. Direct Link: ${devUrl}\n2. Shared Link: ${publicShareUrl}`;
     const waUrl = `https://wa.me/?text=${encodeURIComponent(msg)}`;
     const a = document.createElement('a');
     a.href = waUrl;
@@ -88,7 +97,6 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
     a.click();
   };
 
-  // Download a standalone mobile installer HTML package that the user can save & open on their phone
   const handleDownloadInstallerPackage = () => {
     setDownloadingLauncher(true);
     const htmlContent = `<!DOCTYPE html>
@@ -103,13 +111,14 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
     body { background: #0f172a; color: #f8fafc; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 20px; }
-    .card { background: #1e293b; border: 1px solid #334155; border-radius: 24px; max-width: 400px; width: 100%; padding: 28px 24px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 24px; max-width: 420px; width: 100%; padding: 28px 24px; text-align: center; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
     .logo { width: 72px; height: 72px; background: linear-gradient(135deg, #10b981, #047857); border-radius: 20px; margin: 0 auto 16px; display: flex; align-items: center; justify-content: center; font-size: 32px; font-weight: 900; color: white; box-shadow: 0 10px 25px rgba(16,185,129,0.4); }
     h1 { font-size: 22px; font-weight: 800; margin-bottom: 6px; color: #ffffff; }
     p.sub { font-size: 13px; color: #94a3b8; margin-bottom: 20px; }
     .steps { background: #0f172a; border-radius: 16px; padding: 16px; text-align: left; margin-bottom: 20px; border: 1px solid #334155; font-size: 13px; line-height: 1.6; color: #cbd5e1; }
     .steps strong { color: #34d399; }
-    .btn { display: block; width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: white; font-weight: 800; font-size: 15px; padding: 15px 20px; border-radius: 14px; text-decoration: none; box-shadow: 0 10px 20px rgba(16,185,129,0.3); margin-bottom: 12px; }
+    .btn { display: block; width: 100%; background: linear-gradient(135deg, #10b981, #059669); color: white; font-weight: 800; font-size: 14px; padding: 14px 18px; border-radius: 14px; text-decoration: none; box-shadow: 0 10px 20px rgba(16,185,129,0.3); margin-bottom: 10px; }
+    .btn-sec { display: block; width: 100%; background: #334155; color: #e2e8f0; font-weight: 700; font-size: 13px; padding: 12px 18px; border-radius: 14px; text-decoration: none; }
   </style>
 </head>
 <body>
@@ -119,11 +128,12 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
     <p class="sub">Billing, Udhar & Box-Ladi Stock App</p>
     <div class="steps">
       <p><strong>फोन में APK ऐप की तरह इनस्टॉल करने के लिए:</strong></p>
-      <p>1. नीचे दिए हरे बटन <strong>"Open & Install App"</strong> पर टैप करें।</p>
+      <p>1. नीचे दिए हरे बटन पर टैप करके ऐप खोलें।</p>
       <p>2. Chrome के ऊपर कोने में <strong>3 डॉट्स (⋮)</strong> पर टैप करें।</p>
       <p>3. <strong>"Install app" (ऐप इंस्टॉल करें)</strong> या <strong>"Add to Home screen"</strong> चुनें।</p>
     </div>
-    <a class="btn" href="${appUrl}">🚀 Open & Install App Now</a>
+    <a class="btn" href="${devUrl}">🚀 Open Active App Link (Direct)</a>
+    <a class="btn-sec" href="${publicShareUrl}">🌐 Open Shared Public Link</a>
   </div>
 </body>
 </html>`;
@@ -142,7 +152,7 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 bg-slate-900/70 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden text-slate-800 flex flex-col max-h-[92vh]">
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col max-h-[92vh]">
         {/* Header */}
         <div className="bg-gradient-to-r from-emerald-600 via-emerald-700 to-teal-800 p-4 text-white relative shrink-0">
           <button
@@ -206,12 +216,12 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
         {/* Body Content */}
         <div className="p-4 space-y-3.5 overflow-y-auto flex-1 text-xs">
           {installSuccess || isInstalled ? (
-            <div className="text-center py-6 space-y-2.5 bg-emerald-50 border border-emerald-200 rounded-2xl p-4">
-              <CheckCircle className="w-12 h-12 text-emerald-600 mx-auto" />
-              <h4 className="font-black text-slate-900 text-base">
+            <div className="text-center py-6 space-y-2.5 bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 rounded-2xl p-4">
+              <CheckCircle className="w-12 h-12 text-emerald-600 dark:text-emerald-400 mx-auto" />
+              <h4 className="font-black text-slate-900 dark:text-white text-base">
                 {lang === 'hi' ? 'ऐप आपके फोन में इनस्टॉल हो चुका है!' : 'App Installed on Your Phone!'}
               </h4>
-              <p className="text-xs text-slate-600">
+              <p className="text-xs text-slate-600 dark:text-slate-300">
                 {lang === 'hi'
                   ? 'अब आप अपने फोन की होम स्क्रीन पर DukaanVyapar आइकन से सीधे ऐप चला सकते हैं।'
                   : "You can now open DukaanVyapar directly from your phone's Home Screen / App Drawer."}
@@ -221,14 +231,14 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
             <>
               {/* Direct 1-Tap Install if supported in current browser context */}
               {isInstallable && (
-                <div className="bg-emerald-50 border-2 border-emerald-500 rounded-xl p-3.5 space-y-2.5">
+                <div className="bg-emerald-50 dark:bg-emerald-950/40 border-2 border-emerald-500 rounded-xl p-3.5 space-y-2.5">
                   <div className="flex items-start gap-2.5">
-                    <ShieldCheck className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                    <ShieldCheck className="w-5 h-5 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5" />
                     <div>
-                      <span className="font-black text-emerald-950 text-xs block">
+                      <span className="font-black text-emerald-950 dark:text-emerald-100 text-xs block">
                         {lang === 'hi' ? '1-टैप एंड्रॉइड WebAPK इंस्टॉलेशन तैयार है!' : '1-Tap Android WebAPK Ready!'}
                       </span>
-                      <span className="text-[11px] text-emerald-800">
+                      <span className="text-[11px] text-emerald-800 dark:text-emerald-300">
                         {lang === 'hi'
                           ? 'नीचे बटन दबाते ही यह ऐप आपके फोन में असली APK की तरह इनस्टॉल हो जाएगा।'
                           : 'Tap below to install directly into your phone app drawer.'}
@@ -248,144 +258,134 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
                 </div>
               )}
 
-              {/* Step-by-step Android Chrome WebAPK Guide */}
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2.5">
-                <div className="flex items-center justify-between">
-                  <span className="font-black text-slate-900 text-xs flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4 text-emerald-600" />
-                    <span>
+              {/* Important Note about 404 on ais-pre vs ais-dev */}
+              <div className="bg-amber-50 dark:bg-amber-950/40 border border-amber-300 dark:border-amber-800 rounded-xl p-3 space-y-1.5">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="w-4 h-4 text-amber-700 dark:text-amber-400 shrink-0 mt-0.5" />
+                  <div className="text-[11px] text-amber-950 dark:text-amber-200 leading-relaxed">
+                    <strong className="font-black block">
                       {lang === 'hi'
-                        ? 'फोन में असली ऐप (WebAPK) कैसे इनस्टॉल करें?'
-                        : 'How to Install as Android App (WebAPK):'}
-                    </span>
-                  </span>
+                        ? 'महत्वपूर्ण: यदि लिंक खोलने पर 404 Error आए तो क्या करें?'
+                        : 'Important: Why did the link show 404 Error?'}
+                    </strong>
+                    {lang === 'hi' ? (
+                      <>
+                        1. नीचे दिए <strong>"1. Direct Active Link (ais-dev)"</strong> को उसी फोन/ब्राउज़र में खोलें जहाँ आपकी Gmail ID (<code>mohdSR242@gmail.com</code>) लॉगिन है — यह तुरंत खुलेगा!<br />
+                        2. या AI Studio में ऊपर दाईं ओर <strong>Share (शेयर आइकन)</strong> या <strong>Deploy (रॉकेट आइकन)</strong> दबाकर ऐप को Public कर दें, उसके बाद Public लिंक भी हर जगह खुलेगा।
+                      </>
+                    ) : (
+                      <>
+                        1. Use the <strong>Direct Active Link (ais-dev)</strong> below in the browser where your Google account is signed in.<br />
+                        2. Or click the <strong>Share / Deploy</strong> button at the top-right of AI Studio to activate the Public Share URL.
+                      </>
+                    )}
+                  </div>
                 </div>
-
-                <ol className="space-y-2 text-[11px] text-slate-700 font-medium">
-                  <li className="flex items-start gap-2 bg-white p-2 rounded-lg border border-slate-200">
-                    <span className="w-5 h-5 rounded-full bg-emerald-600 text-white font-black flex items-center justify-center text-[10px] shrink-0 mt-0.5">
-                      1
-                    </span>
-                    <div>
-                      {lang === 'hi' ? (
-                        <>
-                          नीचे से <strong>ऐप का लिंक कॉपी करें</strong> या <strong>QR कोड स्कैन करें</strong> और अपने फोन के <strong>Chrome ब्राउज़र</strong> में खोलें।
-                        </>
-                      ) : (
-                        <>
-                          Copy the App Link below or scan the QR code and open it in <strong>Chrome browser</strong> on your Android phone.
-                        </>
-                      )}
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-2 bg-white p-2 rounded-lg border border-slate-200">
-                    <span className="w-5 h-5 rounded-full bg-emerald-600 text-white font-black flex items-center justify-center text-[10px] shrink-0 mt-0.5">
-                      2
-                    </span>
-                    <div>
-                      {lang === 'hi' ? (
-                        <>
-                          Chrome में ऊपर दाईं तरफ <strong>3 डॉट्स (⋮)</strong> पर टैप करें और <strong>"Install app" (ऐप इंस्टॉल करें)</strong> या <strong>"Add to Home screen"</strong> पर दबाएं।
-                        </>
-                      ) : (
-                        <>
-                          Tap the Chrome menu <strong>(⋮)</strong> at top-right and select <strong>"Install app"</strong> or <strong>"Add to Home screen"</strong>.
-                        </>
-                      )}
-                    </div>
-                  </li>
-                  <li className="flex items-start gap-2 bg-white p-2 rounded-lg border border-slate-200">
-                    <span className="w-5 h-5 rounded-full bg-emerald-600 text-white font-black flex items-center justify-center text-[10px] shrink-0 mt-0.5">
-                      3
-                    </span>
-                    <div>
-                      {lang === 'hi' ? (
-                        <>
-                          <strong>Install</strong> दबाते ही 2 सेकंड में आपके फोन में <strong>DukaanVyapar APK</strong> इनस्टॉल हो जाएगा जो बिना इंटरनेट के भी चलेगा!
-                        </>
-                      ) : (
-                        <>
-                          Android will automatically build and install the <strong>DukaanVyapar WebAPK</strong> in your App Drawer with full offline support!
-                        </>
-                      )}
-                    </div>
-                  </li>
-                </ol>
               </div>
 
-              {/* Copy Link & WhatsApp Share + QR Code */}
-              <div className="bg-white border border-slate-200 rounded-xl p-3 space-y-2.5">
-                <label className="text-[10px] font-extrabold uppercase text-slate-500 block">
-                  {lang === 'hi' ? 'आपका मोबाइल ऐप लिंक (App Install Link):' : 'Your Direct Mobile App Link:'}
-                </label>
-
-                <div className="flex items-center gap-1.5">
-                  <input
-                    type="text"
-                    readOnly
-                    value={appUrl}
-                    className="flex-1 bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2 text-[11px] font-mono text-slate-700 focus:outline-none"
-                  />
-                  <button
-                    type="button"
-                    onClick={handleCopyLink}
-                    className={`px-3 py-2 rounded-lg font-extrabold text-xs flex items-center gap-1 shrink-0 transition ${
-                      copiedLink
-                        ? 'bg-emerald-600 text-white'
-                        : 'bg-slate-900 hover:bg-slate-800 text-white'
-                    }`}
-                  >
-                    {copiedLink ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedLink ? (lang === 'hi' ? 'कॉपी हो गया' : 'Copied!') : (lang === 'hi' ? 'कॉपी' : 'Copy')}</span>
-                  </button>
+              {/* Both Links: Active Dev Link & Public Share Link */}
+              <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3 space-y-3">
+                {/* Link 1: Active Dev URL */}
+                <div className="space-y-1">
+                  <label className="text-[10px] font-extrabold uppercase text-emerald-700 dark:text-emerald-400 block">
+                    {lang === 'hi'
+                      ? '1. Direct Active Link (तुरंत चालू लिंक - Gmail लॉगिन के साथ):'
+                      : '1. Direct Active Link (Works Immediately):'}
+                  </label>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="text"
+                      readOnly
+                      value={devUrl}
+                      className="flex-1 bg-emerald-50/60 dark:bg-slate-900 border border-emerald-300 dark:border-emerald-800 rounded-lg px-2.5 py-1.5 text-[11px] font-mono text-slate-800 dark:text-slate-200 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleCopyUrl(devUrl, 'dev')}
+                      className={`px-2.5 py-1.5 rounded-lg font-extrabold text-xs flex items-center gap-1 shrink-0 transition ${
+                        copiedType === 'dev'
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 text-white'
+                      }`}
+                    >
+                      {copiedType === 'dev' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedType === 'dev' ? 'Copied' : 'Copy'}</span>
+                    </button>
+                    <a
+                      href={devUrl}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-lg flex items-center gap-1 shrink-0 transition"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Open</span>
+                    </a>
+                  </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-2 pt-1">
-                  <button
-                    type="button"
-                    onClick={handleShareWhatsApp}
-                    className="py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-2xs transition"
-                  >
-                    <Share2 className="w-3.5 h-3.5" />
-                    <span>{lang === 'hi' ? 'WhatsApp पर भेजें' : 'Send to WhatsApp'}</span>
-                  </button>
-
-                  <a
-                    href={appUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="py-2 px-3 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-2xs transition"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    <span>{lang === 'hi' ? 'नए टैब में खोलें' : 'Open Direct Link'}</span>
-                  </a>
+                {/* Link 2: Public Share URL */}
+                <div className="space-y-1 pt-2 border-t border-slate-100 dark:border-slate-700">
+                  <label className="text-[10px] font-extrabold uppercase text-slate-500 dark:text-slate-400 block">
+                    {lang === 'hi'
+                      ? '2. Public Share Link (AI Studio में Share ऑन करने के बाद):'
+                      : '2. Public Share Link (Requires clicking Share in AI Studio):'}
+                  </label>
+                  <div className="flex items-center gap-1.5">
+                    <input
+                      type="text"
+                      readOnly
+                      value={publicShareUrl}
+                      className="flex-1 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-1.5 text-[11px] font-mono text-slate-600 dark:text-slate-400 focus:outline-none"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => handleCopyUrl(publicShareUrl, 'pre')}
+                      className={`px-2.5 py-1.5 rounded-lg font-extrabold text-xs flex items-center gap-1 shrink-0 transition ${
+                        copiedType === 'pre'
+                          ? 'bg-emerald-600 text-white'
+                          : 'bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 text-slate-800 dark:text-slate-200'
+                      }`}
+                    >
+                      {copiedType === 'pre' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                      <span>{copiedType === 'pre' ? 'Copied' : 'Copy'}</span>
+                    </button>
+                  </div>
                 </div>
+
+                <button
+                  type="button"
+                  onClick={handleShareWhatsApp}
+                  className="w-full py-2 px-3 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl flex items-center justify-center gap-1.5 shadow-2xs transition"
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>{lang === 'hi' ? 'दोनों लिंक WhatsApp पर भेजें' : 'Send Links to WhatsApp'}</span>
+                </button>
 
                 {/* Scannable QR Code for Phone Camera */}
-                <div className="flex items-center gap-3 pt-2 border-t border-slate-100">
+                <div className="flex items-center gap-3 pt-2 border-t border-slate-100 dark:border-slate-700">
                   <img
                     src={qrCodeUrl}
                     alt="Scan QR to install on phone"
-                    className="w-20 h-20 rounded-lg border border-slate-200 p-1 bg-white shrink-0"
+                    className="w-20 h-20 rounded-lg border border-slate-200 dark:border-slate-700 p-1 bg-white shrink-0"
                   />
                   <div className="space-y-1">
-                    <span className="font-extrabold text-slate-800 text-xs flex items-center gap-1">
-                      <QrCode className="w-3.5 h-3.5 text-emerald-600" />
+                    <span className="font-extrabold text-slate-800 dark:text-slate-200 text-xs flex items-center gap-1">
+                      <QrCode className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                       <span>{lang === 'hi' ? 'फोन कैमरे से QR स्कैन करें' : 'Scan QR with Phone Camera'}</span>
                     </span>
-                    <p className="text-[10px] text-slate-500 leading-relaxed">
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
                       {lang === 'hi'
-                        ? 'अपने फोन से यह QR स्कैन करके सीधे Chrome में खोलें और "Install App" दबाएं।'
-                        : 'Scan this QR code with your phone to open directly in Chrome and tap "Install App".'}
+                        ? 'Chrome में खुलने के बाद ऊपर (⋮) मेन्यू दबाएं और "Install app" या "Add to Home screen" चुनें।'
+                        : 'Once open in Chrome, tap the (⋮) menu at top-right and select "Install app" or "Add to Home screen".'}
                     </p>
                   </div>
                 </div>
               </div>
 
               {isIOS && (
-                <div className="bg-blue-50 border border-blue-200 rounded-xl p-3 space-y-1.5">
-                  <h4 className="font-bold text-xs text-blue-950">iPhone / iPad (Safari):</h4>
-                  <p className="text-[11px] text-blue-800">
+                <div className="bg-blue-50 dark:bg-blue-950/40 border border-blue-200 dark:border-blue-800 rounded-xl p-3 space-y-1.5">
+                  <h4 className="font-bold text-xs text-blue-950 dark:text-blue-200">iPhone / iPad (Safari):</h4>
+                  <p className="text-[11px] text-blue-800 dark:text-blue-300">
                     1. Tap <Share2 className="w-3.5 h-3.5 inline" /> <strong>Share</strong> in Safari toolbar → 2. Tap <PlusSquare className="w-3.5 h-3.5 inline" /> <strong>Add to Home Screen</strong>.
                   </p>
                 </div>
@@ -394,17 +394,16 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
           ) : (
             /* TAB 2: Download Standalone Installer & PWABuilder APK */
             <div className="space-y-3">
-              {/* Option 1: Instant App Installer File Download */}
-              <div className="bg-emerald-50 border border-emerald-300 rounded-xl p-3.5 space-y-2.5">
+              <div className="bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-300 dark:border-emerald-800 rounded-xl p-3.5 space-y-2.5">
                 <div className="flex items-start gap-2.5">
-                  <FileDown className="w-5 h-5 text-emerald-700 shrink-0 mt-0.5" />
+                  <FileDown className="w-5 h-5 text-emerald-700 dark:text-emerald-400 shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-black text-emerald-950 text-xs">
+                    <h4 className="font-black text-emerald-950 dark:text-emerald-100 text-xs">
                       {lang === 'hi'
-                        ? 'विकल्प 1: पोर्टेबल ऐप इंस्टॉलर फ़ाइल डाउनलोड करें'
-                        : 'Option 1: Download Portable App Installer File'}
+                        ? 'पोर्टेबल ऐप इंस्टॉलर फ़ाइल डाउनलोड करें'
+                        : 'Download Portable App Installer File'}
                     </h4>
-                    <p className="text-[11px] text-emerald-800 mt-0.5 leading-relaxed">
+                    <p className="text-[11px] text-emerald-800 dark:text-emerald-300 mt-0.5 leading-relaxed">
                       {lang === 'hi'
                         ? 'यह फ़ाइल आपके फोन के Downloads फोल्डर में सेव हो जाएगी। इसे कभी भी खोलकर आप वन-टैप में ऐप चला या इनस्टॉल कर सकते हैं।'
                         : 'Saves a standalone installer launcher directly to your phone Downloads folder.'}
@@ -430,43 +429,28 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
                 </button>
               </div>
 
-              {/* Option 2: Build Signed Android .APK via PWABuilder */}
-              <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2.5">
+              <div className="bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 space-y-2">
                 <div className="flex items-start gap-2.5">
-                  <Smartphone className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+                  <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="font-black text-slate-900 text-xs">
+                    <h4 className="font-black text-slate-900 dark:text-white text-xs">
                       {lang === 'hi'
-                        ? 'विकल्प 2: PWABuilder से `.apk` फ़ाइल जनरेट करें'
-                        : 'Option 2: Generate Signed `.apk` File via PWABuilder'}
+                        ? 'AI Studio से पब्लिक क्लाउड लिंक कैसे चालू करें?'
+                        : 'How to Enable Public Cloud URL in AI Studio:'}
                     </h4>
-                    <p className="text-[11px] text-slate-600 mt-0.5 leading-relaxed">
-                      {lang === 'hi'
-                        ? 'हमने इस ऐप में पूरा Android Manifest और Service Worker जोड़ दिया है। यदि आपको अलग से `.apk` फ़ाइल चाहिए, तो नीचे बटन दबाकर PWABuilder पर "Package for Store -> Android APK" डाउनलोड कर सकते हैं:'
-                        : 'This app is fully configured with a Web App Manifest & Service Worker. To generate a standalone signed `.apk` binary, open PWABuilder below and click "Package for Store -> Android":'}
-                    </p>
+                    <ol className="text-[11px] text-slate-600 dark:text-slate-300 mt-1 space-y-1 list-decimal list-inside">
+                      <li>
+                        {lang === 'hi'
+                          ? 'AI Studio स्क्रीन में सबसे ऊपर दाईं ओर (Top-Right) "Share" या "Deploy (🚀)" आइकन पर टैप करें।'
+                          : 'Tap the "Share" or "Deploy (🚀)" icon at the top-right of the AI Studio screen.'}
+                      </li>
+                      <li>
+                        {lang === 'hi'
+                          ? '"Public" स्विच ऑन करें — इसके बाद आपका `ais-pre-...` लिंक बिना किसी 404 Error के किसी भी फोन में खुलेगा!'
+                          : 'Turn on the "Public" toggle or click Deploy — your shared link will then open on any phone without 404!'}
+                      </li>
+                    </ol>
                   </div>
-                </div>
-
-                <div className="flex items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={handleCopyLink}
-                    className="px-3 py-2.5 bg-white border border-slate-300 hover:bg-slate-100 text-slate-800 font-bold text-xs rounded-xl flex items-center gap-1.5 shrink-0 transition"
-                  >
-                    {copiedLink ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
-                    <span>{copiedLink ? 'Link Copied' : '1. Copy URL'}</span>
-                  </button>
-
-                  <a
-                    href={`https://www.pwabuilder.com/reportcard?site=${encodeURIComponent(appUrl)}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="flex-1 py-2.5 px-3 bg-blue-600 hover:bg-blue-700 text-white font-black text-xs rounded-xl shadow-xs flex items-center justify-center gap-1.5 transition"
-                  >
-                    <ExternalLink className="w-3.5 h-3.5" />
-                    <span>{lang === 'hi' ? '2. APK जनरेटर खोलें (PWABuilder)' : '2. Open APK Builder'}</span>
-                  </a>
                 </div>
               </div>
             </div>
@@ -474,11 +458,11 @@ export const PWAInstallModal: React.FC<PWAInstallModalProps> = ({
         </div>
 
         {/* Footer */}
-        <div className="p-3 bg-slate-50 border-t border-slate-200 shrink-0">
+        <div className="p-3 bg-slate-50 dark:bg-slate-800/90 border-t border-slate-200 dark:border-slate-800 shrink-0">
           <button
             type="button"
             onClick={onClose}
-            className="w-full py-2.5 bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs rounded-xl transition"
+            className="w-full py-2.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-100 font-bold text-xs rounded-xl transition"
           >
             {lang === 'hi' ? 'बंद करें (Close)' : 'Close'}
           </button>

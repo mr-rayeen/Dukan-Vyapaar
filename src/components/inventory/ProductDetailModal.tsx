@@ -146,7 +146,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden text-slate-800 flex flex-col max-h-[92vh]">
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col max-h-[92vh]">
         {/* Header */}
         <div className="bg-gradient-to-r from-blue-700 via-blue-800 to-indigo-800 p-4 text-white flex items-start justify-between">
           <div className="min-w-0 flex-1 pr-2">
@@ -170,22 +170,22 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         {/* Body */}
         <div className="p-4 space-y-3.5 overflow-y-auto flex-1">
           {/* PERMANENT SAVED PACK SIZE CARD */}
-          <div className="bg-emerald-50 border-2 border-emerald-500/40 rounded-xl p-3 flex items-center justify-between">
+          <div className="bg-emerald-50 dark:bg-emerald-950/30 border-2 border-emerald-500/40 dark:border-emerald-700/50 rounded-xl p-3 flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="w-9 h-9 rounded-xl bg-emerald-600 text-white flex items-center justify-center shadow-xs">
                 <Lock className="w-5 h-5" />
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <span className="text-[10px] font-extrabold uppercase text-emerald-800">
+                  <span className="text-[10px] font-extrabold uppercase text-emerald-800 dark:text-emerald-300">
                     Saved Master Pack Size
                   </span>
-                  <span className="px-1.5 py-0.2 bg-emerald-200 text-emerald-900 rounded text-[9px] font-bold">
+                  <span className="px-1.5 py-0.2 bg-emerald-200 dark:bg-emerald-900/60 text-emerald-900 dark:text-emerald-200 rounded text-[9px] font-bold">
                     Fixed
                   </span>
                 </div>
-                <div className="text-base font-black text-slate-900">
-                  1 Box = <span className="text-emerald-700">{product.packSize} Ladi (लड़ी)</span>
+                <div className="text-base font-black text-slate-900 dark:text-white">
+                  1 Box = <span className="text-emerald-700 dark:text-emerald-400">{product.packSize} Ladi (लड़ी)</span>
                 </div>
               </div>
             </div>
@@ -193,7 +193,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             <button
               type="button"
               onClick={() => onEdit(product)}
-              className="px-2.5 py-1.5 bg-white border border-emerald-300 text-emerald-800 text-xs font-bold rounded-lg shadow-2xs hover:bg-emerald-100/50 flex items-center gap-1 active:scale-95 transition"
+              className="px-2.5 py-1.5 bg-white dark:bg-slate-800 border border-emerald-300 dark:border-emerald-700 text-emerald-800 dark:text-emerald-300 text-xs font-bold rounded-lg shadow-2xs hover:bg-emerald-100/50 dark:hover:bg-slate-700 flex items-center gap-1 active:scale-95 transition"
             >
               <Edit2 className="w-3.5 h-3.5" />
               <span>Edit</span>
@@ -201,13 +201,13 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           </div>
 
           {/* Current Stock Banner */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3.5 space-y-2">
+          <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl p-3.5 space-y-2">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-bold text-slate-500 uppercase tracking-wide">
+              <span className="text-xs font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wide">
                 Current Stock (मौजूदा माल)
               </span>
               {lowStock && (
-                <span className="px-2 py-0.5 bg-rose-100 text-rose-700 font-extrabold text-[10px] rounded-full flex items-center gap-1">
+                <span className="px-2 py-0.5 bg-rose-100 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 font-extrabold text-[10px] rounded-full flex items-center gap-1">
                   <AlertTriangle className="w-3 h-3" />
                   <span>Low Stock Alert</span>
                 </span>
@@ -216,10 +216,10 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
             <div className="flex items-baseline justify-between">
               <div>
-                <div className="text-2xl font-black text-slate-900">
-                  {boxes} <span className="text-sm font-semibold text-slate-600">Box</span> + {looseLadi} <span className="text-sm font-semibold text-slate-600">Ladi</span>
+                <div className="text-2xl font-black text-slate-900 dark:text-white">
+                  {boxes} <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">Box</span> + {looseLadi} <span className="text-sm font-semibold text-slate-600 dark:text-slate-400">Ladi</span>
                 </div>
-                <div className="text-xs font-bold text-blue-700 mt-0.5">
+                <div className="text-xs font-bold text-blue-700 dark:text-blue-400 mt-0.5">
                   = {product.totalPieces.toLocaleString('en-IN')} Total Ladi (लड़ी) in Master
                 </div>
               </div>
@@ -236,21 +236,21 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
 
             {/* Quick Add Stock Form with Selling Price for Box and Ladi */}
             {showAddStockForm && (
-              <div className="mt-3 pt-3 border-t border-slate-200 space-y-3 animate-in fade-in">
+              <div className="mt-3 pt-3 border-t border-slate-200 dark:border-slate-700 space-y-3 animate-in fade-in">
                 <div className="flex items-center justify-between">
-                  <span className="text-xs font-black text-slate-800 flex items-center gap-1.5">
-                    <PlusCircle className="w-3.5 h-3.5 text-blue-600" />
+                  <span className="text-xs font-black text-slate-800 dark:text-slate-200 flex items-center gap-1.5">
+                    <PlusCircle className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                     <span>{lang === 'hi' ? 'स्टॉक जोड़ें व बिक्री भाव सेट करें:' : 'Add Stock & Set Selling Prices:'}</span>
                   </span>
-                  <span className="text-[10px] font-bold text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+                  <span className="text-[10px] font-bold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-800">
                     +{(addBoxes * product.packSize) + addLadi} Total Ladi
                   </span>
                 </div>
 
                 {/* Quantities to Add */}
                 <div className="grid grid-cols-2 gap-2">
-                  <div className="bg-white border border-slate-200 rounded-xl p-2.5 shadow-2xs">
-                    <span className="text-[10px] font-bold text-slate-500 block mb-1">
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 shadow-2xs">
+                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">
                       {lang === 'hi' ? 'बॉक्स जोड़ें (Boxes to Add)' : 'Boxes to Add'}
                     </span>
                     <input
@@ -259,11 +259,11 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       value={addBoxes === 0 ? '' : addBoxes}
                       placeholder="0"
                       onChange={(e) => setAddBoxes(Math.max(0, parseInt(e.target.value) || 0))}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-center text-sm font-black text-slate-900 focus:bg-white focus:outline-none focus:border-blue-500"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-1.5 text-center text-sm font-black text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-blue-500"
                     />
                   </div>
-                  <div className="bg-white border border-slate-200 rounded-xl p-2.5 shadow-2xs">
-                    <span className="text-[10px] font-bold text-slate-500 block mb-1">
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 shadow-2xs">
+                    <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">
                       {lang === 'hi' ? 'खुली लड़ी (Loose Ladi)' : 'Loose Ladi to Add'}
                     </span>
                     <input
@@ -272,28 +272,28 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       value={addLadi === 0 ? '' : addLadi}
                       placeholder="0"
                       onChange={(e) => setAddLadi(Math.max(0, parseInt(e.target.value) || 0))}
-                      className="w-full bg-slate-50 border border-slate-300 rounded-lg p-1.5 text-center text-sm font-black text-slate-900 focus:bg-white focus:outline-none focus:border-blue-500"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-lg p-1.5 text-center text-sm font-black text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-blue-500"
                     />
                   </div>
                 </div>
 
                 {/* Selling Prices & Rates at Stock Add Time */}
-                <div className="bg-emerald-50/70 border border-emerald-300/80 rounded-xl p-3 space-y-2">
+                <div className="bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-300/80 dark:border-emerald-800/70 rounded-xl p-3 space-y-2">
                   <div className="flex items-center justify-between">
-                    <span className="text-[11px] font-extrabold text-emerald-900 uppercase tracking-wide flex items-center gap-1">
-                      <Tag className="w-3.5 h-3.5 text-emerald-600" />
+                    <span className="text-[11px] font-extrabold text-emerald-900 dark:text-emerald-200 uppercase tracking-wide flex items-center gap-1">
+                      <Tag className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
                       <span>{lang === 'hi' ? 'बिक्री भाव सेट करें (Set Selling Prices)' : 'Set Selling Prices for this Stock'}</span>
                     </span>
-                    <span className="text-[9px] font-bold text-emerald-800 bg-emerald-200/80 px-1.5 py-0.5 rounded">
+                    <span className="text-[9px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-200/80 dark:bg-emerald-900/60 px-1.5 py-0.5 rounded">
                       Per Box & Ladi
                     </span>
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
                     {/* Selling Price for Box */}
-                    <div className="bg-white border border-emerald-200 rounded-lg p-2 shadow-2xs">
-                      <label className="text-[10px] font-black text-slate-700 block mb-1">
-                        {lang === 'hi' ? 'बॉक्स बिक्री भाव (Sale/Box)' : 'Selling Price / Box'} <span className="text-emerald-700">*</span>
+                    <div className="bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800 rounded-lg p-2 shadow-2xs">
+                      <label className="text-[10px] font-black text-slate-700 dark:text-slate-200 block mb-1">
+                        {lang === 'hi' ? 'बॉक्स बिक्री भाव (Sale/Box)' : 'Selling Price / Box'} <span className="text-emerald-700 dark:text-emerald-400">*</span>
                       </label>
                       <div className="relative">
                         <span className="absolute left-2.5 top-1.5 text-xs font-bold text-slate-400">₹</span>
@@ -303,7 +303,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                           value={salePriceBox === 0 ? '' : salePriceBox}
                           placeholder="0"
                           onChange={(e) => setSalePriceBox(Math.max(0, parseFloat(e.target.value) || 0))}
-                          className="w-full bg-slate-50 border border-slate-300 rounded-md pl-6 pr-2 py-1 text-xs font-black text-emerald-700 focus:bg-white focus:outline-none focus:border-emerald-600"
+                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md pl-6 pr-2 py-1 text-xs font-black text-emerald-700 dark:text-emerald-400 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-emerald-600"
                         />
                       </div>
                       <span className="text-[9px] text-slate-400 block mt-0.5 text-right">
@@ -312,9 +312,9 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     </div>
 
                     {/* Selling Price for Ladi */}
-                    <div className="bg-white border border-emerald-200 rounded-lg p-2 shadow-2xs">
-                      <label className="text-[10px] font-black text-slate-700 block mb-1">
-                        {lang === 'hi' ? 'लड़ी बिक्री भाव (Sale/Ladi)' : 'Selling Price / Ladi'} <span className="text-emerald-700">*</span>
+                    <div className="bg-white dark:bg-slate-900 border border-emerald-200 dark:border-emerald-800 rounded-lg p-2 shadow-2xs">
+                      <label className="text-[10px] font-black text-slate-700 dark:text-slate-200 block mb-1">
+                        {lang === 'hi' ? 'लड़ी बिक्री भाव (Sale/Ladi)' : 'Selling Price / Ladi'} <span className="text-emerald-700 dark:text-emerald-400">*</span>
                       </label>
                       <div className="relative">
                         <span className="absolute left-2.5 top-1.5 text-xs font-bold text-slate-400">₹</span>
@@ -331,7 +331,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                               setSalePriceBox(Math.round(val * product.packSize * 0.95));
                             }
                           }}
-                          className="w-full bg-slate-50 border border-slate-300 rounded-md pl-6 pr-2 py-1 text-xs font-black text-emerald-700 focus:bg-white focus:outline-none focus:border-emerald-600"
+                          className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md pl-6 pr-2 py-1 text-xs font-black text-emerald-700 dark:text-emerald-400 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-emerald-600"
                         />
                       </div>
                       <span className="text-[9px] text-slate-400 block mt-0.5 text-right">
@@ -341,8 +341,8 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   </div>
 
                   {/* Purchase Cost (Buy Rate) */}
-                  <div className="bg-white border border-slate-200 rounded-lg p-2 flex items-center justify-between gap-2">
-                    <span className="text-[10px] font-bold text-slate-600">
+                  <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2 flex items-center justify-between gap-2">
+                    <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">
                       {lang === 'hi' ? 'खरीद दर (Buy Rate/Box):' : 'Purchase Cost (Buy/Box):'}
                     </span>
                     <div className="relative w-28">
@@ -353,16 +353,16 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                         value={purchaseRateBox === 0 ? '' : purchaseRateBox}
                         placeholder="0"
                         onChange={(e) => setPurchaseRateBox(Math.max(0, parseFloat(e.target.value) || 0))}
-                        className="w-full bg-slate-50 border border-slate-300 rounded-md pl-6 pr-2 py-0.5 text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500 text-right"
+                        className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-md pl-6 pr-2 py-0.5 text-xs font-bold text-slate-800 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-blue-500 text-right"
                       />
                     </div>
                   </div>
 
                   {/* Live Margin Calculation */}
                   {salePriceBox > 0 && purchaseRateBox > 0 && (
-                    <div className="text-[10px] font-bold text-emerald-800 bg-white/80 p-2 rounded-lg flex items-center justify-between border border-emerald-200">
+                    <div className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-white/80 dark:bg-slate-900/80 p-2 rounded-lg flex items-center justify-between border border-emerald-200 dark:border-emerald-800">
                       <span>{lang === 'hi' ? 'अनुमानित मुनाफा प्रति बॉक्स:' : 'Profit Margin / Box:'}</span>
-                      <span className="font-black text-emerald-700 text-xs">
+                      <span className="font-black text-emerald-700 dark:text-emerald-400 text-xs">
                         +₹{(salePriceBox - purchaseRateBox).toFixed(0)} ({(((salePriceBox - purchaseRateBox) / purchaseRateBox) * 100).toFixed(1)}%)
                       </span>
                     </div>
@@ -374,7 +374,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   <button
                     type="button"
                     onClick={() => setShowAddStockForm(false)}
-                    className="py-2.5 px-3 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs rounded-xl transition"
+                    className="py-2.5 px-3 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-bold text-xs rounded-xl transition"
                   >
                     {lang === 'hi' ? 'रद्द' : 'Cancel'}
                   </button>
@@ -397,39 +397,39 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           </div>
 
           {/* Pricing & Margins Card */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2 text-xs">
-            <span className="font-bold text-slate-700 uppercase tracking-wide text-[11px] block">
+          <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl p-3 space-y-2 text-xs">
+            <span className="font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wide text-[11px] block">
               Pricing & Margin Breakdown
             </span>
 
             <div className="grid grid-cols-2 gap-2">
-              <div className="bg-white p-2.5 rounded-lg border border-slate-200 space-y-1">
+              <div className="bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 space-y-1">
                 <span className="text-[10px] font-bold text-slate-400 block uppercase">Box Pricing (बॉक्स)</span>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Buy Rate:</span>
-                  <span className="font-bold">₹{product.purchaseRateCarton}</span>
+                  <span className="text-slate-500 dark:text-slate-400">Buy Rate:</span>
+                  <span className="font-bold text-slate-900 dark:text-white">₹{product.purchaseRateCarton}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Sale Rate:</span>
-                  <span className="font-bold text-emerald-700">₹{product.salePriceCarton}</span>
+                  <span className="text-slate-500 dark:text-slate-400">Sale Rate:</span>
+                  <span className="font-bold text-emerald-700 dark:text-emerald-400">₹{product.salePriceCarton}</span>
                 </div>
-                <div className="flex justify-between pt-1 border-t border-slate-100 text-emerald-800 font-extrabold">
+                <div className="flex justify-between pt-1 border-t border-slate-100 dark:border-slate-800 text-emerald-800 dark:text-emerald-300 font-extrabold">
                   <span>Margin:</span>
                   <span>+₹{marginPerBox}</span>
                 </div>
               </div>
 
-              <div className="bg-white p-2.5 rounded-lg border border-slate-200 space-y-1">
+              <div className="bg-white dark:bg-slate-900 p-2.5 rounded-lg border border-slate-200 dark:border-slate-700 space-y-1">
                 <span className="text-[10px] font-bold text-slate-400 block uppercase">Single Ladi Pricing (लड़ी)</span>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Cost/Ladi:</span>
-                  <span className="font-bold">₹{costPerLadi.toFixed(1)}</span>
+                  <span className="text-slate-500 dark:text-slate-400">Cost/Ladi:</span>
+                  <span className="font-bold text-slate-900 dark:text-white">₹{costPerLadi.toFixed(1)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-slate-500">Sale Rate:</span>
-                  <span className="font-bold text-emerald-700">₹{product.salePricePiece}</span>
+                  <span className="text-slate-500 dark:text-slate-400">Sale Rate:</span>
+                  <span className="font-bold text-emerald-700 dark:text-emerald-400">₹{product.salePricePiece}</span>
                 </div>
-                <div className="flex justify-between pt-1 border-t border-slate-100 text-emerald-800 font-extrabold">
+                <div className="flex justify-between pt-1 border-t border-slate-100 dark:border-slate-800 text-emerald-800 dark:text-emerald-300 font-extrabold">
                   <span>Margin/Ladi:</span>
                   <span>+₹{marginPerLadi.toFixed(1)}</span>
                 </div>
@@ -438,13 +438,13 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
           </div>
 
           {/* Stock History Timeline with Search & Date-Range Filter */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2.5 text-xs">
+          <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl p-3 space-y-2.5 text-xs">
             <div className="flex items-center justify-between">
-              <h4 className="font-bold text-slate-800 uppercase tracking-wide text-[11px] flex items-center gap-1.5">
-                <History className="w-3.5 h-3.5 text-blue-600" />
+              <h4 className="font-bold text-slate-800 dark:text-slate-200 uppercase tracking-wide text-[11px] flex items-center gap-1.5">
+                <History className="w-3.5 h-3.5 text-blue-600 dark:text-blue-400" />
                 <span>{lang === 'hi' ? 'स्टॉक हिस्ट्री (आवक - जावक)' : 'Stock Movement History'}</span>
               </h4>
-              <span className="text-[10px] font-bold text-slate-500 bg-white border border-slate-200 px-2 py-0.5 rounded-full">
+              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 px-2 py-0.5 rounded-full">
                 {filteredMovements.length} / {productMovements.length} {lang === 'hi' ? 'रिकॉर्ड' : 'Records'}
               </span>
             </div>
@@ -464,7 +464,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                           ? 'बिल नंबर, सप्लायर या नोट खोजें...'
                           : 'Search bill #, supplier, note...'
                       }
-                      className="w-full bg-white border border-slate-200 rounded-lg pl-8 pr-6 py-1.5 text-[11px] font-semibold text-slate-800 placeholder-slate-400 focus:outline-none focus:border-blue-500"
+                      className="w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg pl-8 pr-6 py-1.5 text-[11px] font-semibold text-slate-800 dark:text-slate-100 placeholder-slate-400 dark:placeholder-slate-500 focus:outline-none focus:border-blue-500"
                     />
                     {historySearch && (
                       <button
@@ -478,14 +478,14 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   </div>
 
                   {/* Quick Type Filter (All / In / Out) */}
-                  <div className="flex items-center bg-white border border-slate-200 rounded-lg p-0.5 shrink-0">
+                  <div className="flex items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-0.5 shrink-0">
                     <button
                       type="button"
                       onClick={() => setHistoryTypeFilter('all')}
                       className={`px-2 py-1 rounded-md text-[10px] font-bold transition ${
                         historyTypeFilter === 'all'
-                          ? 'bg-slate-800 text-white'
-                          : 'text-slate-600 hover:bg-slate-100'
+                          ? 'bg-slate-800 dark:bg-slate-700 text-white'
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                       }`}
                     >
                       {lang === 'hi' ? 'सभी' : 'All'}
@@ -496,7 +496,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       className={`px-2 py-1 rounded-md text-[10px] font-bold transition ${
                         historyTypeFilter === 'in'
                           ? 'bg-emerald-600 text-white'
-                          : 'text-emerald-700 hover:bg-emerald-50'
+                          : 'text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40'
                       }`}
                     >
                       +In
@@ -507,7 +507,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       className={`px-2 py-1 rounded-md text-[10px] font-bold transition ${
                         historyTypeFilter === 'out'
                           ? 'bg-rose-600 text-white'
-                          : 'text-rose-700 hover:bg-rose-50'
+                          : 'text-rose-700 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40'
                       }`}
                     >
                       -Out
@@ -516,9 +516,9 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 </div>
 
                 {/* Date-Range Filter */}
-                <div className="grid grid-cols-2 gap-1.5 items-center bg-white border border-slate-200 rounded-lg p-2">
+                <div className="grid grid-cols-2 gap-1.5 items-center bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg p-2">
                   <div>
-                    <label className="text-[9px] font-bold text-slate-500 flex items-center gap-1 mb-0.5">
+                    <label className="text-[9px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1 mb-0.5">
                       <Calendar className="w-2.5 h-2.5 text-slate-400" />
                       <span>{lang === 'hi' ? 'शुरुआती तारीख (From)' : 'From Date'}</span>
                     </label>
@@ -526,12 +526,12 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       type="date"
                       value={historyStartDate}
                       onChange={(e) => setHistoryStartDate(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded px-1.5 py-1 text-[10px] font-bold text-slate-700 focus:bg-white focus:outline-none focus:border-blue-500"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-1.5 py-1 text-[10px] font-bold text-slate-700 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-blue-500"
                     />
                   </div>
                   <div>
                     <div className="flex items-center justify-between mb-0.5">
-                      <label className="text-[9px] font-bold text-slate-500 flex items-center gap-1">
+                      <label className="text-[9px] font-bold text-slate-500 dark:text-slate-400 flex items-center gap-1">
                         <Calendar className="w-2.5 h-2.5 text-slate-400" />
                         <span>{lang === 'hi' ? 'अंतिम तारीख (To)' : 'To Date'}</span>
                       </label>
@@ -544,7 +544,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                             setHistoryEndDate('');
                             setHistoryTypeFilter('all');
                           }}
-                          className="text-[9px] font-extrabold text-blue-600 hover:underline flex items-center gap-0.5"
+                          className="text-[9px] font-extrabold text-blue-600 dark:text-blue-400 hover:underline flex items-center gap-0.5"
                         >
                           <RotateCcw className="w-2.5 h-2.5" />
                           <span>Reset</span>
@@ -555,7 +555,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       type="date"
                       value={historyEndDate}
                       onChange={(e) => setHistoryEndDate(e.target.value)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded px-1.5 py-1 text-[10px] font-bold text-slate-700 focus:bg-white focus:outline-none focus:border-blue-500"
+                      className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded px-1.5 py-1 text-[10px] font-bold text-slate-700 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-blue-500"
                     />
                   </div>
                 </div>
@@ -563,13 +563,13 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
             )}
 
             {productMovements.length === 0 ? (
-              <div className="p-3 bg-white border border-slate-200 rounded-xl text-center text-slate-400 text-xs">
+              <div className="p-3 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl text-center text-slate-400 dark:text-slate-500 text-xs">
                 {lang === 'hi'
                   ? 'इस प्रोडक्ट के लिए अभी कोई स्टॉक हिस्ट्री नहीं है।'
                   : 'No recent movements recorded for this product yet.'}
               </div>
             ) : filteredMovements.length === 0 ? (
-              <div className="p-4 bg-white border border-dashed border-slate-300 rounded-xl text-center text-slate-500 space-y-1">
+              <div className="p-4 bg-white dark:bg-slate-900 border border-dashed border-slate-300 dark:border-slate-700 rounded-xl text-center text-slate-500 dark:text-slate-400 space-y-1">
                 <p className="font-bold text-xs">
                   {lang === 'hi'
                     ? 'चुनी गई तारीख या खोज के लिए कोई रिकॉर्ड नहीं मिला।'
@@ -583,7 +583,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                     setHistoryEndDate('');
                     setHistoryTypeFilter('all');
                   }}
-                  className="text-[11px] font-extrabold text-blue-600 hover:underline"
+                  className="text-[11px] font-extrabold text-blue-600 dark:text-blue-400 hover:underline"
                 >
                   {lang === 'hi' ? 'फ़िल्टर साफ़ करें (Clear Filters)' : 'Clear All Filters'}
                 </button>
@@ -595,31 +595,31 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   return (
                     <div
                       key={`${mov.id}-${index}`}
-                      className="p-2 bg-white border border-slate-200 rounded-lg flex items-center justify-between gap-2 text-xs hover:border-blue-200 transition"
+                      className="p-2 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-lg flex items-center justify-between gap-2 text-xs hover:border-blue-200 dark:hover:border-blue-800 transition"
                     >
                       <div className="min-w-0 flex-1">
-                        <div className="font-bold text-slate-900 capitalize flex items-center gap-1.5 flex-wrap">
+                        <div className="font-bold text-slate-900 dark:text-white capitalize flex items-center gap-1.5 flex-wrap">
                           <span
                             className={`px-1.5 py-0.5 rounded text-[9px] font-black uppercase ${
                               isPositive
-                                ? 'bg-emerald-100 text-emerald-800'
-                                : 'bg-rose-100 text-rose-800'
+                                ? 'bg-emerald-100 dark:bg-emerald-950/60 text-emerald-800 dark:text-emerald-300'
+                                : 'bg-rose-100 dark:bg-rose-950/60 text-rose-800 dark:text-rose-300'
                             }`}
                           >
                             {mov.type}
                           </span>
                           {mov.referenceId && (
-                            <span className="text-[10px] font-extrabold text-blue-700 bg-blue-50 px-1.5 py-0.5 rounded">
+                            <span className="text-[10px] font-extrabold text-blue-700 dark:text-blue-300 bg-blue-50 dark:bg-blue-950/60 px-1.5 py-0.5 rounded">
                               {mov.referenceId}
                             </span>
                           )}
                         </div>
                         {mov.notes && (
-                          <p className="text-[10px] text-slate-600 truncate mt-0.5 font-medium">
+                          <p className="text-[10px] text-slate-600 dark:text-slate-400 truncate mt-0.5 font-medium">
                             {mov.notes}
                           </p>
                         )}
-                        <span className="text-[10px] text-slate-400 block mt-0.5">
+                        <span className="text-[10px] text-slate-400 dark:text-slate-500 block mt-0.5">
                           {new Date(mov.timestamp).toLocaleDateString('en-IN', {
                             day: '2-digit',
                             month: 'short',
@@ -635,13 +635,13 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                       <div className="text-right shrink-0">
                         <span
                           className={`font-black text-xs block ${
-                            isPositive ? 'text-emerald-600' : 'text-rose-600'
+                            isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                           }`}
                         >
                           {isPositive ? '+' : '-'}
                           {mov.cartonQty} Box + {mov.pieceQty} Ladi
                         </span>
-                        <span className="text-[10px] text-slate-500 font-semibold">
+                        <span className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold">
                           Bal: {mov.remainingTotalPieces} Ladi
                         </span>
                       </div>
@@ -654,11 +654,11 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
         </div>
 
         {/* Footer Actions */}
-        <div className="p-3 bg-slate-50 border-t border-slate-200">
+        <div className="p-3 bg-slate-50 dark:bg-slate-800/90 border-t border-slate-200 dark:border-slate-800">
           {isConfirmingDelete ? (
-            <div className="flex items-center justify-between gap-2 p-2 bg-rose-50 border border-rose-300 rounded-xl animate-in fade-in">
-              <div className="flex items-center gap-1.5 text-rose-800 text-xs font-bold">
-                <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600" />
+            <div className="flex items-center justify-between gap-2 p-2 bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 rounded-xl animate-in fade-in">
+              <div className="flex items-center gap-1.5 text-rose-800 dark:text-rose-300 text-xs font-bold">
+                <AlertTriangle className="w-4 h-4 shrink-0 text-rose-600 dark:text-rose-400" />
                 <span>Delete {product.name}?</span>
               </div>
               <div className="flex items-center gap-1.5">
@@ -672,7 +672,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsConfirmingDelete(false)}
-                  className="px-2.5 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-semibold text-xs rounded-lg transition"
+                  className="px-2.5 py-1.5 bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-700 dark:text-slate-200 font-semibold text-xs rounded-lg transition"
                 >
                   Cancel
                 </button>
@@ -683,7 +683,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
               <button
                 type="button"
                 onClick={() => setIsConfirmingDelete(true)}
-                className="p-2.5 text-rose-600 hover:bg-rose-50 active:scale-95 rounded-xl border border-rose-200 transition flex items-center justify-center shrink-0"
+                className="p-2.5 text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/40 active:scale-95 rounded-xl border border-rose-200 dark:border-rose-800 transition flex items-center justify-center shrink-0"
                 title="Delete product"
               >
                 <Trash2 className="w-4 h-4" />
@@ -695,7 +695,7 @@ export const ProductDetailModal: React.FC<ProductDetailModalProps> = ({
                   onEdit(product);
                   onClose();
                 }}
-                className="flex-1 py-2.5 bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5"
+                className="flex-1 py-2.5 bg-slate-900 dark:bg-slate-700 hover:bg-slate-800 dark:hover:bg-slate-600 text-white font-bold text-xs rounded-xl shadow-xs transition flex items-center justify-center gap-1.5"
               >
                 <Edit2 className="w-3.5 h-3.5" />
                 <span>Edit Product Details (पैक साइज बदलें)</span>

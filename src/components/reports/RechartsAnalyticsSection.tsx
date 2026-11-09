@@ -137,22 +137,22 @@ export const RechartsAnalyticsSection: React.FC<RechartsAnalyticsSectionProps> =
       </div>
 
       {/* 1. BAR CHART: Daily Sales of the last 7 days */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-3">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xs space-y-3">
         <div className="flex items-start justify-between">
           <div>
-            <span className="text-[10px] font-bold text-emerald-700 uppercase tracking-wide flex items-center gap-1">
-              <BarChart3 className="w-3.5 h-3.5 text-emerald-600" />
+            <span className="text-[10px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-wide flex items-center gap-1">
+              <BarChart3 className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400" />
               <span>{lang === 'hi' ? 'दैनिक बिक्री (पिछले 7 दिन)' : 'Daily Sales (Last 7 Days)'}</span>
             </span>
-            <div className="text-lg font-black text-slate-900 mt-0.5">
+            <div className="text-lg font-black text-slate-900 dark:text-white mt-0.5">
               ₹{total7DaySales.toLocaleString('en-IN')}
             </div>
-            <span className="text-[10px] text-slate-400">
+            <span className="text-[10px] text-slate-400 dark:text-slate-500">
               Avg: ₹{avgDailySales.toLocaleString('en-IN')} / {lang === 'hi' ? 'दिन' : 'day'}
             </span>
           </div>
 
-          <div className="flex items-center gap-2 text-[10px] font-bold bg-emerald-50 text-emerald-800 px-2.5 py-1 rounded-lg border border-emerald-200">
+          <div className="flex items-center gap-2 text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/50 text-emerald-800 dark:text-emerald-300 px-2.5 py-1 rounded-lg border border-emerald-200 dark:border-emerald-800">
             <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
             <span>7 Days</span>
           </div>
@@ -162,11 +162,11 @@ export const RechartsAnalyticsSection: React.FC<RechartsAnalyticsSectionProps> =
         <div className="h-56 w-full pt-2 -ml-2">
           <ResponsiveContainer width="100%" height={210}>
             <BarChart data={barChartData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#64748b" strokeOpacity={0.2} />
               <XAxis
                 dataKey="day"
-                tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }}
-                axisLine={{ stroke: '#e2e8f0' }}
+                tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }}
+                axisLine={{ stroke: '#475569', strokeOpacity: 0.3 }}
                 tickLine={false}
               />
               <YAxis
@@ -207,20 +207,20 @@ export const RechartsAnalyticsSection: React.FC<RechartsAnalyticsSectionProps> =
       </div>
 
       {/* 2. LINE CHART: Monthly Profit Trends */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 shadow-2xs space-y-3">
+      <div className="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-2xl p-4 shadow-2xs space-y-3">
         <div className="flex items-start justify-between">
           <div>
-            <span className="text-[10px] font-bold text-teal-700 uppercase tracking-wide flex items-center gap-1">
-              <TrendingUp className="w-3.5 h-3.5 text-teal-600" />
+            <span className="text-[10px] font-bold text-teal-700 dark:text-teal-400 uppercase tracking-wide flex items-center gap-1">
+              <TrendingUp className="w-3.5 h-3.5 text-teal-600 dark:text-teal-400" />
               <span>{lang === 'hi' ? 'शुद्ध मासिक मुनाफा (True Net Profit)' : 'Monthly True Net Profit Trends'}</span>
             </span>
-            <div className="text-lg font-black text-slate-900 mt-0.5">
+            <div className="text-lg font-black text-slate-900 dark:text-white mt-0.5">
               ₹{totalNetProfit6M.toLocaleString('en-IN')}
             </div>
-            <div className="flex items-center gap-2 text-[10px] text-slate-500 mt-0.5">
+            <div className="flex items-center gap-2 text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
               <span>Gross: ₹{totalGrossProfit6M.toLocaleString('en-IN')}</span>
               <span>•</span>
-              <span className="text-rose-600 font-bold">Expenses: -₹{totalExpenses6M.toLocaleString('en-IN')}</span>
+              <span className="text-rose-600 dark:text-rose-400 font-bold">Expenses: -₹{totalExpenses6M.toLocaleString('en-IN')}</span>
             </div>
           </div>
 
@@ -229,13 +229,13 @@ export const RechartsAnalyticsSection: React.FC<RechartsAnalyticsSectionProps> =
               <button
                 type="button"
                 onClick={onOpenExpenseModal}
-                className="flex items-center gap-1 px-2 py-1 bg-rose-50 hover:bg-rose-100 text-rose-700 rounded-lg text-[10px] font-extrabold border border-rose-200 transition active:scale-95"
+                className="flex items-center gap-1 px-2 py-1 bg-rose-50 dark:bg-rose-950/50 hover:bg-rose-100 dark:hover:bg-rose-900/50 text-rose-700 dark:text-rose-300 rounded-lg text-[10px] font-extrabold border border-rose-200 dark:border-rose-800 transition active:scale-95"
               >
                 <Plus className="w-3 h-3" />
                 <span>{lang === 'hi' ? 'खर्च' : 'Expense'}</span>
               </button>
             )}
-            <span className="text-[10px] font-extrabold text-teal-800 bg-teal-50 px-2.5 py-1 rounded-lg border border-teal-200">
+            <span className="text-[10px] font-extrabold text-teal-800 dark:text-teal-300 bg-teal-50 dark:bg-teal-950/50 px-2.5 py-1 rounded-lg border border-teal-200 dark:border-teal-800">
               6 Months
             </span>
           </div>
@@ -245,11 +245,11 @@ export const RechartsAnalyticsSection: React.FC<RechartsAnalyticsSectionProps> =
         <div className="h-56 w-full pt-2 -ml-2">
           <ResponsiveContainer width="100%" height={210}>
             <LineChart data={monthlyProfitData} margin={{ top: 10, right: 10, left: -15, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#64748b" strokeOpacity={0.2} />
               <XAxis
                 dataKey="shortLabel"
-                tick={{ fontSize: 10, fill: '#64748b', fontWeight: 600 }}
-                axisLine={{ stroke: '#e2e8f0' }}
+                tick={{ fontSize: 10, fill: '#94a3b8', fontWeight: 600 }}
+                axisLine={{ stroke: '#475569', strokeOpacity: 0.3 }}
                 tickLine={false}
               />
               <YAxis

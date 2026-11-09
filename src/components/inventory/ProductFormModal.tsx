@@ -123,7 +123,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs animate-in fade-in duration-200">
-      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl border border-slate-100 overflow-hidden text-slate-800 flex flex-col max-h-[92vh]">
+      <div className="w-full max-w-md bg-white dark:bg-slate-900 rounded-2xl shadow-2xl border border-slate-100 dark:border-slate-800 overflow-hidden text-slate-800 dark:text-slate-100 flex flex-col max-h-[92vh]">
         {/* Header */}
         <div className="bg-gradient-to-r from-emerald-600 to-teal-700 p-4 text-white flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -146,7 +146,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
         {/* Scrollable Form */}
         <form onSubmit={handleSubmit} className="p-4 space-y-4 overflow-y-auto flex-1">
           {error && (
-            <div className="p-2.5 bg-rose-50 border border-rose-300 rounded-xl text-rose-700 text-xs font-bold">
+            <div className="p-2.5 bg-rose-50 dark:bg-rose-950/50 border border-rose-300 dark:border-rose-800 rounded-xl text-rose-700 dark:text-rose-300 text-xs font-bold">
               {error}
             </div>
           )}
@@ -154,7 +154,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
           {/* Product Basic Info */}
           <div className="space-y-2.5">
             <div>
-              <label className="text-xs font-bold text-slate-700 block mb-1">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-200 block mb-1">
                 {lang === 'hi' ? 'प्रोडक्ट का नाम (Product Name)' : 'Product Name'} <span className="text-rose-500">*</span>
               </label>
               <input
@@ -166,13 +166,13 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   setName(e.target.value);
                   setError(null);
                 }}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-500"
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-emerald-500"
               />
             </div>
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-200 block mb-1">
                   {lang === 'hi' ? 'हिन्दी नाम (वैकल्पिक)' : 'Hindi / Local Name'}
                 </label>
                 <input
@@ -180,27 +180,54 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   placeholder="उदा. पारले-जी बिस्कुट"
                   value={hindiName}
                   onChange={(e) => setHindiName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-emerald-500"
                 />
               </div>
 
               <div>
-                <label className="text-xs font-bold text-slate-700 block mb-1">
-                  Category
+                <label className="text-xs font-bold text-slate-700 dark:text-slate-200 block mb-1">
+                  {lang === 'hi' ? 'कैटेगरी (Category)' : 'Category'}
                 </label>
                 <input
                   type="text"
-                  placeholder="e.g. Biscuits, Spices"
+                  placeholder="e.g. Namkeen, Biscuit"
                   value={category}
                   onChange={(e) => setCategory(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-3 py-2 text-xs font-semibold text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-emerald-500"
                 />
               </div>
+            </div>
+
+            {/* Quick Category Selection Pills */}
+            <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+              {[
+                'Namkeen',
+                'Biscuit',
+                'Snacks & Chips',
+                'Kurkure & Fryums',
+                'Confectionery',
+                'Beverages',
+                'Spices & Masala',
+                'General',
+              ].map((presetCat) => (
+                <button
+                  key={presetCat}
+                  type="button"
+                  onClick={() => setCategory(presetCat)}
+                  className={`px-2 py-1 rounded-lg text-[10px] font-bold border transition ${
+                    category === presetCat
+                      ? 'bg-emerald-600 text-white border-emerald-600'
+                      : 'bg-slate-50 dark:bg-slate-800 text-slate-600 dark:text-slate-300 border-slate-200 dark:border-slate-700 hover:border-emerald-400'
+                  }`}
+                >
+                  {presetCat}
+                </button>
+              ))}
             </div>
           </div>
 
           {/* PACK SIZE SELECTOR: 1 Box = X Ladi */}
-          <div className="bg-emerald-50/50 border-2 border-emerald-500/40 rounded-xl p-3">
+          <div className="bg-emerald-50/50 dark:bg-emerald-950/30 border-2 border-emerald-500/40 dark:border-emerald-700/50 rounded-xl p-3">
             <PackSizeSelector
               value={packSize}
               onChange={(newSize) => setPackSize(newSize)}
@@ -210,19 +237,19 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
           </div>
 
           {/* Initial Stock Inputs (Boxes + Loose Ladi) */}
-          <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 space-y-2">
+          <div className="bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 rounded-xl p-3 space-y-2">
             <div className="flex items-center justify-between">
-              <label className="text-xs font-bold text-slate-700 block">
+              <label className="text-xs font-bold text-slate-700 dark:text-slate-200 block">
                 {lang === 'hi' ? 'प्रारंभिक स्टॉक (Current Stock)' : 'Current Stock in Godown'}
               </label>
-              <span className="text-[11px] font-extrabold text-blue-700">
+              <span className="text-[11px] font-extrabold text-blue-700 dark:text-blue-400">
                 Total: {composePieces(boxes, looseLadi, packSize)} Ladi (लड़ी)
               </span>
             </div>
 
             <div className="grid grid-cols-2 gap-2">
               <div>
-                <span className="text-[10px] font-bold text-slate-500 block mb-1">
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">
                   Boxes (बॉक्स)
                 </span>
                 <input
@@ -231,12 +258,12 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   value={boxes === 0 ? '' : boxes}
                   placeholder="0"
                   onChange={(e) => setBoxes(Math.max(0, parseInt(e.target.value) || 0))}
-                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-center text-xs font-black text-slate-900 focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-center text-xs font-black text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
                 />
               </div>
 
               <div>
-                <span className="text-[10px] font-bold text-slate-500 block mb-1">
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 block mb-1">
                   Loose Ladi (खुली लड़ी)
                 </span>
                 <input
@@ -245,33 +272,33 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                   value={looseLadi === 0 ? '' : looseLadi}
                   placeholder="0"
                   onChange={(e) => setLooseLadi(Math.max(0, parseInt(e.target.value) || 0))}
-                  className="w-full bg-white border border-slate-300 rounded-lg px-3 py-2 text-center text-xs font-black text-slate-900 focus:outline-none focus:border-emerald-500"
+                  className="w-full bg-white dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-center text-xs font-black text-slate-900 dark:text-white focus:outline-none focus:border-emerald-500"
                 />
               </div>
             </div>
 
-            <p className="text-[10px] text-slate-500">
-              Formula: ({boxes || 0} Box × {packSize} Ladi) + {looseLadi || 0} Loose = <strong className="text-slate-800">{composePieces(boxes, looseLadi, packSize)} Total Ladi</strong>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400">
+              Formula: ({boxes || 0} Box × {packSize} Ladi) + {looseLadi || 0} Loose = <strong className="text-slate-800 dark:text-slate-200">{composePieces(boxes, looseLadi, packSize)} Total Ladi</strong>
             </p>
           </div>
 
           {/* Pricing: Purchase & Selling Prices (Box & Ladi) */}
-          <div className="bg-emerald-50/70 border border-emerald-300 rounded-xl p-3.5 space-y-3">
+          <div className="bg-emerald-50/70 dark:bg-emerald-950/30 border border-emerald-300 dark:border-emerald-800/70 rounded-xl p-3.5 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs font-black text-emerald-950 uppercase tracking-wide flex items-center gap-1.5">
-                <DollarSign className="w-4 h-4 text-emerald-700" />
+              <span className="text-xs font-black text-emerald-950 dark:text-emerald-200 uppercase tracking-wide flex items-center gap-1.5">
+                <DollarSign className="w-4 h-4 text-emerald-700 dark:text-emerald-400" />
                 <span>{lang === 'hi' ? 'बिक्री भाव सेट करें (Selling Prices)' : 'Selling Prices & Margin'}</span>
               </span>
-              <span className="text-[10px] font-bold text-emerald-800 bg-emerald-200/80 px-2 py-0.5 rounded-full">
+              <span className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-200/80 dark:bg-emerald-900/60 px-2 py-0.5 rounded-full">
                 Box & Ladi Rate
               </span>
             </div>
 
             {/* Selling Prices for Box and Ladi */}
             <div className="grid grid-cols-2 gap-2.5">
-              <div className="bg-white border border-emerald-200 rounded-xl p-2.5 shadow-2xs">
-                <span className="text-[10px] font-black text-slate-800 block mb-1">
-                  {lang === 'hi' ? 'बॉक्स बिक्री भाव (Sale/Box)' : 'Selling Price / Box'} <span className="text-emerald-700">*</span>
+              <div className="bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-800 rounded-xl p-2.5 shadow-2xs">
+                <span className="text-[10px] font-black text-slate-800 dark:text-slate-200 block mb-1">
+                  {lang === 'hi' ? 'बॉक्स बिक्री भाव (Sale/Box)' : 'Selling Price / Box'} <span className="text-emerald-700 dark:text-emerald-400">*</span>
                 </span>
                 <div className="relative">
                   <span className="absolute left-2.5 top-1.5 text-xs font-bold text-slate-400">₹</span>
@@ -281,7 +308,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                     value={salePriceBox === 0 ? '' : salePriceBox}
                     placeholder="0"
                     onChange={(e) => setSalePriceBox(Math.max(0, parseFloat(e.target.value) || 0))}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-lg pl-6 pr-2 py-1.5 text-xs font-black text-emerald-700 focus:bg-white focus:outline-none focus:border-emerald-600"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg pl-6 pr-2 py-1.5 text-xs font-black text-emerald-700 dark:text-emerald-400 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-emerald-600"
                   />
                 </div>
                 <span className="text-[9px] text-slate-400 block mt-0.5 text-right">
@@ -289,9 +316,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 </span>
               </div>
 
-              <div className="bg-white border border-emerald-200 rounded-xl p-2.5 shadow-2xs">
-                <span className="text-[10px] font-black text-slate-800 block mb-1">
-                  {lang === 'hi' ? 'लड़ी बिक्री भाव (Sale/Ladi)' : 'Selling Price / Ladi'} <span className="text-emerald-700">*</span>
+              <div className="bg-white dark:bg-slate-800 border border-emerald-200 dark:border-emerald-800 rounded-xl p-2.5 shadow-2xs">
+                <span className="text-[10px] font-black text-slate-800 dark:text-slate-200 block mb-1">
+                  {lang === 'hi' ? 'लड़ी बिक्री भाव (Sale/Ladi)' : 'Selling Price / Ladi'} <span className="text-emerald-700 dark:text-emerald-400">*</span>
                 </span>
                 <div className="relative">
                   <span className="absolute left-2.5 top-1.5 text-xs font-bold text-slate-400">₹</span>
@@ -301,7 +328,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                     value={salePriceLadi === 0 ? '' : salePriceLadi}
                     placeholder="0"
                     onChange={(e) => handleLadiPriceChange(Math.max(0, parseFloat(e.target.value) || 0))}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-lg pl-6 pr-2 py-1.5 text-xs font-black text-emerald-700 focus:bg-white focus:outline-none focus:border-emerald-600"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-lg pl-6 pr-2 py-1.5 text-xs font-black text-emerald-700 dark:text-emerald-400 focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-emerald-600"
                   />
                 </div>
                 <span className="text-[9px] text-slate-400 block mt-0.5 text-right">
@@ -311,9 +338,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
             </div>
 
             {/* Purchase Rate & Margin */}
-            <div className="bg-white border border-slate-200 rounded-xl p-2.5 space-y-2">
+            <div className="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl p-2.5 space-y-2">
               <div className="flex items-center justify-between gap-2">
-                <span className="text-[10px] font-bold text-slate-600">
+                <span className="text-[10px] font-bold text-slate-600 dark:text-slate-300">
                   {lang === 'hi' ? 'खरीद दर (Buy Rate/Box):' : 'Purchase Cost (Buy/Box):'}
                 </span>
                 <div className="relative w-32">
@@ -324,15 +351,15 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                     value={purchaseRateBox === 0 ? '' : purchaseRateBox}
                     placeholder="0"
                     onChange={(e) => setPurchaseRateBox(Math.max(0, parseFloat(e.target.value) || 0))}
-                    className="w-full bg-slate-50 border border-slate-300 rounded-md pl-6 pr-2 py-0.5 text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:border-blue-500 text-right"
+                    className="w-full bg-slate-50 dark:bg-slate-900 border border-slate-300 dark:border-slate-700 rounded-md pl-6 pr-2 py-0.5 text-xs font-bold text-slate-800 dark:text-white focus:bg-white dark:focus:bg-slate-900 focus:outline-none focus:border-blue-500 text-right"
                   />
                 </div>
               </div>
 
               {purchaseRateBox > 0 && salePriceBox > 0 && (
-                <div className="text-[10px] font-bold text-emerald-800 bg-emerald-50 p-2 rounded-lg flex items-center justify-between border border-emerald-200">
+                <div className="text-[10px] font-bold text-emerald-800 dark:text-emerald-300 bg-emerald-50 dark:bg-emerald-950/50 p-2 rounded-lg flex items-center justify-between border border-emerald-200 dark:border-emerald-800">
                   <span>{lang === 'hi' ? 'मुनाफा प्रति बॉक्स (Profit/Box):' : 'Profit Per Box:'}</span>
-                  <span className="font-extrabold text-emerald-700 text-xs">
+                  <span className="font-extrabold text-emerald-700 dark:text-emerald-400 text-xs">
                     ₹{(salePriceBox - purchaseRateBox).toFixed(0)} ({(((salePriceBox - purchaseRateBox) / purchaseRateBox) * 100).toFixed(1)}%)
                   </span>
                 </div>
@@ -343,7 +370,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
           {/* Barcode & Low Stock Threshold */}
           <div className="grid grid-cols-2 gap-2">
             <div>
-              <label className="text-[10px] font-bold text-slate-600 block mb-1">
+              <label className="text-[10px] font-bold text-slate-600 dark:text-slate-300 block mb-1">
                 Barcode (Optional)
               </label>
               <input
@@ -351,12 +378,12 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 placeholder="Scan or enter"
                 value={barcode}
                 onChange={(e) => setBarcode(e.target.value)}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-500"
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-2 text-xs font-semibold text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-emerald-500"
               />
             </div>
 
             <div>
-              <label className="text-[10px] font-bold text-slate-600 block mb-1">
+              <label className="text-[10px] font-bold text-slate-600 dark:text-slate-300 block mb-1">
                 Low Stock Alert (Ladi)
               </label>
               <input
@@ -364,7 +391,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 min="1"
                 value={lowStockThresholdPieces}
                 onChange={(e) => setLowStockThresholdPieces(Math.max(1, parseInt(e.target.value) || 1))}
-                className="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-2 text-xs font-semibold text-slate-900 focus:bg-white focus:outline-none focus:border-emerald-500"
+                className="w-full bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg px-2.5 py-2 text-xs font-semibold text-slate-900 dark:text-white focus:bg-white dark:focus:bg-slate-800 focus:outline-none focus:border-emerald-500"
               />
             </div>
           </div>
@@ -379,8 +406,8 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
 
             {!isNew && onDelete && (
               isConfirmingDelete ? (
-                <div className="p-2.5 bg-rose-50 border border-rose-300 rounded-xl flex items-center justify-between gap-2 animate-in fade-in">
-                  <span className="text-xs font-bold text-rose-800">Confirm delete this item?</span>
+                <div className="p-2.5 bg-rose-50 dark:bg-rose-950/40 border border-rose-300 dark:border-rose-800 rounded-xl flex items-center justify-between gap-2 animate-in fade-in">
+                  <span className="text-xs font-bold text-rose-800 dark:text-rose-300">Confirm delete this item?</span>
                   <div className="flex items-center gap-1.5">
                     <button
                       type="button"
@@ -392,7 +419,7 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setIsConfirmingDelete(false)}
-                      className="px-2.5 py-1.5 bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg"
+                      className="px-2.5 py-1.5 bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg"
                     >
                       Cancel
                     </button>
@@ -402,9 +429,9 @@ export const ProductFormModal: React.FC<ProductFormModalProps> = ({
                 <button
                   type="button"
                   onClick={() => setIsConfirmingDelete(true)}
-                  className="w-full py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition"
+                  className="w-full py-2.5 bg-rose-50 dark:bg-rose-950/30 hover:bg-rose-100 dark:hover:bg-rose-950/50 text-rose-700 dark:text-rose-300 border border-rose-200 dark:border-rose-800 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 transition"
                 >
-                  <Trash2 className="w-3.5 h-3.5 text-rose-600" />
+                  <Trash2 className="w-3.5 h-3.5 text-rose-600 dark:text-rose-400" />
                   <span>Delete Item from Inventory (सामान हटाएं)</span>
                 </button>
               )

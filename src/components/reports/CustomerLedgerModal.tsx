@@ -41,10 +41,10 @@ export const CustomerLedgerModal: React.FC<CustomerLedgerModalProps> = ({
 
   if (!isOpen || !customerName) return null;
 
-  // Filter all bills belonging to this customer
-  const customerBills = bills.filter(
-    (b) => b.customerName.trim().toLowerCase() === customerName.trim().toLowerCase()
-  );
+  // Filter all bills belonging to this customer and sort newest-first
+  const customerBills = bills
+    .filter((b) => b.customerName.trim().toLowerCase() === customerName.trim().toLowerCase())
+    .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 
   // Compute lifetime customer statistics
   const totalBilled = customerBills.reduce((acc, b) => acc + b.totalAmount, 0);
@@ -69,6 +69,56 @@ export const CustomerLedgerModal: React.FC<CustomerLedgerModalProps> = ({
         createdAt: b.createdAt,
       });
     }
+  });
+
+  // Sort payments newest-first (latest payment on top, older below)
+  allPayments.sort(
+    (a, b) =>
+      new Date(b.createdAt || b.date).getTime() - new Date(a.createdAt || a.date).getTime()
+  );
+
+  // Group payments by local calendar date (YYYY-MM-DD)
+  const getLocalDateKey = (isoStr: string) => {
+    const d = new Date(isoStr);
+    if (isNaN(d.getTime())) return 'unknown';
+    return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(
+      d.getDate()
+    ).padStart(2, '0')}`;
+  };
+
+  const formatDateHeader = (dateKey: string) => {
+    const todayKey = getLocalDateKey(new Date().toISOString());
+    const yest = new Date();
+    yest.setDate(yest.getDate() - 1);
+    const yesterdayKey = getLocalDateKey(yest.toISOString());
+    const [y, m, d] = dateKey.split('-').map(Number);
+    const dt = new Date(y, (m || 1) - 1, d || 1);
+    const formatted = dt.toLocaleDateString('en-IN', {
+      day: '2-digit',
+      month: 'short',
+      year: 'numeric',
+    });
+    if (dateKey === todayKey) return lang === 'hi' ? `आज (Today) • ${formatted}` : `Today • ${formatted}`;
+    if (dateKey === yesterdayKey) return lang === 'hi' ? `कल (Yesterday) • ${formatted}` : `Yesterday • ${formatted}`;
+    return formatted;
+  };
+
+  const paymentDateGroups: {
+    dateKey: string;
+    totalAmount: number;
+    items: PaymentRecord[];
+  }[] = [];
+  const paymentDateMap = new Map<string, { dateKey: string; totalAmount: number; items: PaymentRecord[] }>();
+  allPayments.forEach((p) => {
+    const dKey = getLocalDateKey(p.createdAt || p.date);
+    let grp = paymentDateMap.get(dKey);
+    if (!grp) {
+      grp = { dateKey: dKey, totalAmount: 0, items: [] };
+      paymentDateMap.set(dKey, grp);
+      paymentDateGroups.push(grp);
+    }
+    grp.items.push(p);
+    grp.totalAmount += p.amount;
   });
 
   // Calculate total collected and pending udhar
@@ -370,10 +420,10 @@ export const CustomerLedgerModal: React.FC<CustomerLedgerModalProps> = ({
             </div>
           )}
 
-          {/* 3. PARTED PAYMENTS RECEIVED LOG */}
+          {/* 3. PARTED PAYMENTS RECEIVED LOG (Date-grouped, Latest on Top) */}
           {activeLedgerTab === 'payments' && (
-            <div className="space-y-2">
-              {allPayments.length === 0 ? (
+            <div className="space-y-3">
+              {paymentDateGroups.length === 0 ? (
                 <div className="p-6 text-center text-slate-400">
                   <Wallet className="w-8 h-8 mx-auto mb-2 opacity-40" />
                   <p className="font-bold text-xs">
@@ -381,34 +431,57 @@ export const CustomerLedgerModal: React.FC<CustomerLedgerModalProps> = ({
                   </p>
                 </div>
               ) : (
-                allPayments.map((p, idx) => (
+                paymentDateGroups.map((group) => (
                   <div
-                    key={p.id || idx}
-                    className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-800/80 border border-slate-200 dark:border-slate-700 flex items-center justify-between gap-2"
+                    key={group.dateKey}
+                    className="rounded-xl border border-emerald-200/80 dark:border-emerald-900/50 overflow-hidden bg-white dark:bg-slate-900 shadow-2xs"
                   >
-                    <div className="flex items-center gap-2 min-w-0">
-                      <div className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0">
-                        <ArrowDownRight className="w-3.5 h-3.5" />
+                    <div className="px-3 py-1.5 bg-gradient-to-r from-emerald-900 to-slate-900 text-white flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <Calendar className="w-3 h-3 text-emerald-400" />
+                        <span className="text-[11px] font-black">{formatDateHeader(group.dateKey)}</span>
                       </div>
-                      <div className="min-w-0">
-                        <span className="font-bold text-xs text-slate-900 dark:text-white truncate block">
-                          {p.billNumber ? `Against ${p.billNumber}` : 'Account Credit / Part Payment'}
-                        </span>
-                        <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
-                          <span>{new Date(p.date || p.createdAt).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}</span>
-                          <span>•</span>
-                          <span className="uppercase font-extrabold text-[9px] px-1 rounded bg-slate-200 dark:bg-slate-700">
-                            {p.paymentMethod}
-                          </span>
-                          {p.notes && <span>• {p.notes}</span>}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="text-right shrink-0">
-                      <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
-                        +₹{p.amount.toLocaleString('en-IN')}
+                      <span className="text-[11px] font-black text-emerald-300">
+                        +₹{group.totalAmount.toLocaleString('en-IN')}
                       </span>
+                    </div>
+                    <div className="divide-y divide-slate-100 dark:divide-slate-800">
+                      {group.items.map((p, idx) => (
+                        <div
+                          key={p.id || idx}
+                          className="p-2.5 bg-slate-50/60 dark:bg-slate-800/60 flex items-center justify-between gap-2"
+                        >
+                          <div className="flex items-center gap-2 min-w-0">
+                            <div className="w-7 h-7 rounded-lg bg-emerald-100 dark:bg-emerald-950 text-emerald-700 dark:text-emerald-300 flex items-center justify-center shrink-0">
+                              <ArrowDownRight className="w-3.5 h-3.5" />
+                            </div>
+                            <div className="min-w-0">
+                              <span className="font-bold text-xs text-slate-900 dark:text-white truncate block">
+                                {p.billNumber ? `Against ${p.billNumber}` : 'Account Credit / Part Payment'}
+                              </span>
+                              <div className="flex items-center gap-1.5 text-[10px] text-slate-500">
+                                <span className="font-bold">
+                                  {new Date(p.createdAt || p.date).toLocaleTimeString('en-IN', {
+                                    hour: '2-digit',
+                                    minute: '2-digit',
+                                  })}
+                                </span>
+                                <span>•</span>
+                                <span className="uppercase font-extrabold text-[9px] px-1 rounded bg-slate-200 dark:bg-slate-700">
+                                  {p.paymentMethod}
+                                </span>
+                                {p.notes && <span className="truncate">• {p.notes}</span>}
+                              </div>
+                            </div>
+                          </div>
+
+                          <div className="text-right shrink-0">
+                            <span className="text-xs font-black text-emerald-600 dark:text-emerald-400">
+                              +₹{p.amount.toLocaleString('en-IN')}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 ))

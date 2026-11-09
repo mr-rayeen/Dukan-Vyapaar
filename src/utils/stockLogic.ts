@@ -79,7 +79,7 @@ export function calculateItemTotal(
 /**
  * Standard pack sizes (Ladi per Box) for quick one-tap selection
  */
-export const STANDARD_PACK_SIZES = [6, 12, 24, 36, 48, 60, 100];
+export const STANDARD_PACK_SIZES = [6, 10, 12, 21, 24, 60, 100];
 
 /**
  * Format item quantity for display and receipts:
