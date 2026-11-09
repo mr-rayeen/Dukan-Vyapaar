@@ -741,3 +741,101 @@ export function resetAppToDemoData(): void {
   localStorage.setItem(STORAGE_KEYS.PURCHASES, JSON.stringify(INITIAL_PURCHASES));
 }
 
+export interface AppBackupPayload {
+  appName: string;
+  backupType: 'full' | 'bills_only';
+  version: string;
+  exportedAt: string;
+  settings?: ShopSettings;
+  products?: Product[];
+  bills?: Bill[];
+  purchases?: SupplierPurchase[];
+  expenses?: Expense[];
+  movements?: StockMovement[];
+}
+
+export function createBackupPayload(
+  data: {
+    settings: ShopSettings;
+    products: Product[];
+    bills: Bill[];
+    purchases: SupplierPurchase[];
+    expenses: Expense[];
+    movements: StockMovement[];
+  },
+  backupType: 'full' | 'bills_only' = 'full'
+): AppBackupPayload {
+  if (backupType === 'bills_only') {
+    return {
+      appName: 'Dukan Vyapaar',
+      backupType: 'bills_only',
+      version: '1.0',
+      exportedAt: new Date().toISOString(),
+      bills: data.bills || [],
+      purchases: data.purchases || [],
+    };
+  }
+
+  return {
+    appName: 'Dukan Vyapaar',
+    backupType: 'full',
+    version: '1.0',
+    exportedAt: new Date().toISOString(),
+    settings: data.settings,
+    products: data.products || [],
+    bills: data.bills || [],
+    purchases: data.purchases || [],
+    expenses: data.expenses || [],
+    movements: data.movements || [],
+  };
+}
+
+export function parseAndValidateBackupJson(rawText: string): AppBackupPayload {
+  if (!rawText || !rawText.trim()) {
+    throw new Error('Backup file is empty.');
+  }
+
+  let parsed: any;
+  try {
+    parsed = JSON.parse(rawText);
+  } catch {
+    throw new Error('Invalid JSON file format. Please select a valid .json backup file.');
+  }
+
+  if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('Backup file does not contain a valid backup object.');
+  }
+
+  const hasProducts = Array.isArray(parsed.products);
+  const hasBills = Array.isArray(parsed.bills);
+  const hasPurchases = Array.isArray(parsed.purchases);
+  const hasExpenses = Array.isArray(parsed.expenses);
+  const hasMovements = Array.isArray(parsed.movements);
+
+  if (!hasProducts && !hasBills && !hasPurchases && !hasExpenses && !hasMovements) {
+    throw new Error(
+      'This JSON file does not contain any Dukan Vyapaar data (products, bills, purchases, expenses, or movements).'
+    );
+  }
+
+  const inferredType: 'full' | 'bills_only' =
+    parsed.backupType === 'bills_only' || (!hasProducts && (hasBills || hasPurchases))
+      ? 'bills_only'
+      : 'full';
+
+  return {
+    appName: parsed.appName || 'Dukan Vyapaar',
+    backupType: inferredType,
+    version: String(parsed.version || '1.0'),
+    exportedAt: parsed.exportedAt || new Date().toISOString(),
+    settings:
+      parsed.settings && typeof parsed.settings === 'object' ? parsed.settings : undefined,
+    products: hasProducts ? parsed.products : undefined,
+    bills: hasBills ? parsed.bills : undefined,
+    purchases: hasPurchases ? parsed.purchases : undefined,
+    expenses: hasExpenses ? parsed.expenses : undefined,
+    movements: hasMovements ? parsed.movements : undefined,
+  };
+}
+
+

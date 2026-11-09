@@ -7,6 +7,7 @@ import React, { useState, useEffect } from 'react';
 import { AnimatePresence, motion } from 'motion/react';
 import { Bill, Expense, Product, ShopSettings, StockMovement, SupplierPurchase } from './types';
 import {
+  AppBackupPayload,
   getStoredBills,
   getStoredExpenses,
   getStoredMovements,
@@ -964,6 +965,64 @@ export default function App() {
     }
   };
 
+  // Restore Data from Uploaded JSON Backup (Full or Bills-Only)
+  const handleRestoreBackup = (backup: AppBackupPayload) => {
+    try {
+      if (backup.settings) {
+        setSettings(backup.settings);
+        saveStoredSettings(backup.settings);
+      }
+      if (Array.isArray(backup.products)) {
+        setProducts(backup.products);
+        saveStoredProducts(backup.products);
+      }
+      if (Array.isArray(backup.bills)) {
+        setBills(backup.bills);
+        saveStoredBills(backup.bills);
+      }
+      if (Array.isArray(backup.purchases)) {
+        setPurchases(backup.purchases);
+        saveStoredPurchases(backup.purchases);
+      }
+      if (Array.isArray(backup.expenses)) {
+        setExpenses(backup.expenses);
+        saveStoredExpenses(backup.expenses);
+      }
+      if (Array.isArray(backup.movements)) {
+        setMovements(backup.movements);
+        saveStoredMovements(backup.movements);
+      }
+
+      setIsSettingsModalOpen(false);
+      setSelectedProductForDetail(null);
+      setOpenDetailWithAddStock(false);
+      setIsProductFormOpen(false);
+      setIsSuccessModalOpen(false);
+
+      showToast({
+        type: 'success',
+        title:
+          backup.backupType === 'bills_only'
+            ? lang === 'hi'
+              ? 'सभी बिल सफलतापूर्वक रीस्टोर हो गए!'
+              : 'All Bills Restored Successfully!'
+            : lang === 'hi'
+            ? 'पूरा दुकान डेटा सफलतापूर्वक रीस्टोर हो गया!'
+            : 'Full Shop Backup Restored Successfully!',
+        message:
+          backup.backupType === 'bills_only'
+            ? `${backup.bills?.length ?? 0} Sale Bills • ${backup.purchases?.length ?? 0} Purchase Bills`
+            : `${backup.products?.length ?? products.length} Items • ${backup.bills?.length ?? bills.length} Sale Bills • ${backup.purchases?.length ?? purchases.length} Purchase Bills • ${backup.expenses?.length ?? expenses.length} Expenses`,
+      });
+    } catch (err: any) {
+      showToast({
+        type: 'error',
+        title: lang === 'hi' ? 'बैकअप रीस्टोर फेल हुआ!' : 'Backup Restore Failed',
+        message: err?.message || 'Could not restore data from backup file',
+      });
+    }
+  };
+
   // Low Stock Count for badge
   const lowStockCount = products.filter((p) =>
     isLowStock(p.totalPieces, p.lowStockThresholdPieces)
@@ -1215,6 +1274,11 @@ export default function App() {
         {/* 5. Shop Settings & Profile Modal */}
         <SettingsModal
           settings={settings}
+          products={products}
+          bills={bills}
+          purchases={purchases}
+          expenses={expenses}
+          movements={movements}
           isOpen={isSettingsModalOpen}
           onClose={() => setIsSettingsModalOpen(false)}
           onSave={(newSettings) => {
@@ -1225,6 +1289,7 @@ export default function App() {
               message: newSettings.shopName,
             });
           }}
+          onRestoreBackup={handleRestoreBackup}
           onResetDemoData={handleResetDemoData}
           lang={lang}
           isDarkMode={isDarkMode}
